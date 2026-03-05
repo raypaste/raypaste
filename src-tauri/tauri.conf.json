@@ -12,24 +12,44 @@
   "app": {
     "windows": [
       {
-        "title": "raypaste",
-        "width": 800,
-        "height": 600
+        "title": "Raypaste",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 900,
+        "minHeight": 600,
+        "transparent": true,
+        "backgroundColor": "#00000000",
+        "titleBarStyle": "Overlay"
       }
     ],
     "security": {
-      "csp": null
-    }
+      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' tauri: ipc: http://ipc.localhost"
+    },
+    "macOSPrivateApi": true
   },
+
   "bundle": {
     "active": true,
     "targets": "all",
+    "publisher": "Raypaste",
+    "category": "Productivity",
+    "shortDescription": "An app for fast AI completions anywhere on your computer.",
+    "longDescription": "An app for fast and customizable AI completions in any input on any application on your computer.",
+    "copyright": "Copyright © 2026 Raypaste. All rights reserved.",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "macOS": {
+      "frameworks": [],
+      "minimumSystemVersion": "10.15",
+      "signingIdentity": "-",
+      "providerShortName": null,
+      "entitlements": null,
+      "exceptionDomain": ""
+    }
   }
 }
