@@ -1,64 +1,45 @@
 import { useState } from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Star } from "lucide-react";
 import {
   Collapsible,
   CollapsibleTrigger,
   CollapsibleContent,
 } from "#/components/ui/collapsible";
 import { cn } from "#/lib/utils";
-
-interface Prompt {
-  id: string;
-  name: string;
-}
-
-interface AppGroup {
-  id: string;
-  name: string;
-  prompts: Prompt[];
-}
-
-const MOCK_APP_GROUPS: AppGroup[] = [
-  {
-    id: "notion",
-    name: "Notion",
-    prompts: [
-      { id: "p1", name: "Make formal" },
-      { id: "p2", name: "Summarize" },
-    ],
-  },
-  {
-    id: "vscode",
-    name: "Cursor",
-    prompts: [
-      { id: "p3", name: "Generate metaprompt" },
-      { id: "p4", name: "Update changelog" },
-      { id: "p5", name: "Write tests" },
-    ],
-  },
-  {
-    id: "slack",
-    name: "Slack",
-    prompts: [{ id: "p6", name: "Casual tone" }],
-  },
-];
+import { usePromptsStore, useAppsStore } from "#/stores";
+import type { Page } from "./SidebarNav";
 
 interface PromptsSectionProps {
-  activePromptId?: string;
-  onPromptSelect?: (promptId: string) => void;
+  selectedPromptId: string | null;
+  onNavigate: (page: Page, promptId?: string) => void;
 }
 
 export function PromptsSection({
-  activePromptId,
-  onPromptSelect,
+  selectedPromptId,
+  onNavigate,
 }: PromptsSectionProps) {
-  const [openGroups, setOpenGroups] = useState<Set<string>>(
-    new Set(["notion"]),
-  );
+  const { prompts, defaultPromptId } = usePromptsStore();
+  const { apps } = useAppsStore();
 
-  const toggleGroup = (groupId: string) => {
+  // App groups: prompts assigned to specific apps
+  const appGroups = apps
+    .map((app) => {
+      const assignedPrompts = prompts.filter((p) =>
+        p.appIds.includes(app.bundleId),
+      );
+      return { app, prompts: assignedPrompts };
+    })
+    .filter((g) => g.prompts.length > 0);
+
+  const [openGroups, setOpenGroups] = useState<Set<string> | null>(null);
+  const resolvedOpenGroups =
+    openGroups ?? new Set(appGroups.slice(0, 5).map((g) => g.app.bundleId));
+
+  function toggleGroup(groupId: string) {
     setOpenGroups((prev) => {
-      const next = new Set(prev);
+      const next = new Set(
+        prev ?? appGroups.slice(0, 5).map((g) => g.app.bundleId),
+      );
       if (next.has(groupId)) {
         next.delete(groupId);
       } else {
@@ -66,7 +47,33 @@ export function PromptsSection({
       }
       return next;
     });
-  };
+  }
+
+  // Ungrouped: prompts with no app assignments
+  const ungroupedPrompts = prompts.filter((p) => p.appIds.length === 0);
+
+  if (prompts.length === 0) return null;
+
+  function PromptItem({ id, name }: { id: string; name: string }) {
+    const isSelected = selectedPromptId === id;
+    const isDefault = defaultPromptId === id;
+    return (
+      <button
+        onClick={() => onNavigate("prompt", id)}
+        className={cn(
+          "flex w-full cursor-pointer items-center gap-1.5 rounded-md py-1 pr-2 pl-8 text-left text-[13px] transition-colors",
+          isSelected
+            ? "bg-neutral-800 text-neutral-100"
+            : "text-neutral-300 hover:bg-neutral-800 hover:text-neutral-100",
+        )}
+      >
+        <span className="flex-1 truncate">{name}</span>
+        {isDefault && (
+          <Star className="h-3 w-3 shrink-0 fill-green-400 text-green-400" />
+        )}
+      </button>
+    );
+  }
 
   return (
     <div className="mt-4">
@@ -74,13 +81,14 @@ export function PromptsSection({
         Prompts
       </p>
       <div className="space-y-0.5">
-        {MOCK_APP_GROUPS.map((group) => {
-          const isOpen = openGroups.has(group.id);
+        {/* App groups */}
+        {appGroups.map(({ app, prompts: groupPrompts }) => {
+          const isOpen = resolvedOpenGroups.has(app.bundleId);
           return (
             <Collapsible
-              key={group.id}
+              key={app.bundleId}
               open={isOpen}
-              onOpenChange={() => toggleGroup(group.id)}
+              onOpenChange={() => toggleGroup(app.bundleId)}
             >
               <CollapsibleTrigger className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm text-neutral-200 transition-colors select-none hover:bg-neutral-800 hover:text-neutral-100">
                 <ChevronRight
@@ -89,29 +97,51 @@ export function PromptsSection({
                     isOpen && "rotate-90",
                   )}
                 />
-                <span>{group.name}</span>
+                <span className="truncate">{app.name}</span>
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <div className="mt-0.5 space-y-0.5">
-                  {group.prompts.map((prompt) => (
-                    <button
+                  {groupPrompts.map((prompt) => (
+                    <PromptItem
                       key={prompt.id}
-                      onClick={() => onPromptSelect?.(prompt.id)}
-                      className={cn(
-                        "w-full cursor-pointer rounded-md py-1 pr-2 pl-8 text-left text-[13px] transition-colors",
-                        activePromptId === prompt.id
-                          ? "bg-neutral-800 text-neutral-100"
-                          : "text-neutral-200 hover:bg-neutral-800 hover:text-neutral-100",
-                      )}
-                    >
-                      {prompt.name}
-                    </button>
+                      id={prompt.id}
+                      name={prompt.name}
+                    />
                   ))}
                 </div>
               </CollapsibleContent>
             </Collapsible>
           );
         })}
+
+        {/* Ungrouped prompts */}
+        {ungroupedPrompts.length > 0 && (
+          <Collapsible
+            open={resolvedOpenGroups.has("__ungrouped__")}
+            onOpenChange={() => toggleGroup("__ungrouped__")}
+          >
+            <CollapsibleTrigger className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm text-neutral-200 transition-colors select-none hover:bg-neutral-800 hover:text-neutral-100">
+              <ChevronRight
+                className={cn(
+                  "h-3.5 w-3.5 shrink-0 transition-transform duration-150",
+                  resolvedOpenGroups.has("__ungrouped__") && "rotate-90",
+                )}
+              />
+              <span>Ungrouped</span>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="mt-0.5 space-y-0.5">
+                {ungroupedPrompts.map((prompt) => (
+                  <PromptItem
+                    key={prompt.id}
+                    id={prompt.id}
+                    name={prompt.name}
+                  />
+                ))}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        )}
       </div>
     </div>
   );

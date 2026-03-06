@@ -1,7 +1,7 @@
 import { LayoutGrid, BookOpen, SquarePen } from "lucide-react";
 import { cn } from "#/lib/utils";
 
-export type Page = "new-prompt" | "apps" | "history";
+export type Page = "new-prompt" | "apps" | "history" | "settings" | "prompt";
 
 interface NavItem {
   id: Page;
