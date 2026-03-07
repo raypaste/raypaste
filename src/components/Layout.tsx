@@ -1,40 +1,86 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import { Sidebar } from "#/components/Sidebar/Sidebar";
 import { TitleBar } from "#/components/TitleBar";
+import { ToastContainer } from "#/components/Toast/ToastContainer";
 import type { Page } from "#/components/Sidebar/SidebarNav";
 import { NewPromptPage } from "#/pages/NewPromptPage";
+import { PromptPage } from "#/pages/PromptPage";
 import { AppsPage } from "#/pages/AppsPage";
 import { HistoryPage } from "#/pages/HistoryPage";
-
-function PageContent({ page }: { page: Page }) {
-  switch (page) {
-    case "new-prompt":
-      return <NewPromptPage />;
-    case "apps":
-      return <AppsPage />;
-    case "history":
-      return <HistoryPage />;
-  }
-}
+import { SettingsPage } from "#/pages/SettingsPage";
+import { usePromptsStore, useAppsStore } from "#/stores";
+import type { InstalledApp } from "#/stores";
+import { useAICompletionListener } from "#/hooks/useAICompletionListener";
 
 export function Layout() {
   const [activePage, setActivePage] = useState<Page>("new-prompt");
+  const [selectedPromptId, setSelectedPromptId] = useState<string | null>(null);
+  const { prompts } = usePromptsStore();
+  const { apps, setApps } = useAppsStore();
+
+  useEffect(() => {
+    if (apps.length > 0) return;
+    invoke<InstalledApp[]>("list_apps")
+      .then(setApps)
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useAICompletionListener();
+
+  function handleNavigate(page: Page, promptId?: string) {
+    setActivePage(page);
+    if (promptId !== undefined) setSelectedPromptId(promptId);
+  }
+
+  const selectedPromptName = selectedPromptId
+    ? prompts.find((p) => p.id === selectedPromptId)?.name
+    : undefined;
 
   return (
     <div className="relative flex h-screen w-screen overflow-hidden rounded-xl shadow-2xl">
       <TitleBar />
-      <Sidebar activePage={activePage} onNavigate={setActivePage} />
+      <Sidebar
+        activePage={activePage}
+        selectedPromptId={selectedPromptId}
+        onNavigate={handleNavigate}
+      />
       <main className="flex flex-1 flex-col overflow-hidden bg-[#1a1a1a]">
         <div className="px-6 pt-[20px] pb-4">
           <h1 className="text-base font-semibold text-white/80 capitalize">
-            {activePage.replace("-", " ")}
+            {getPageTitle(activePage, selectedPromptName)}
           </h1>
         </div>
 
         <div className="flex-1 overflow-auto">
-          <PageContent page={activePage} />
+          {activePage === "new-prompt" && (
+            <NewPromptPage onCreated={(id) => handleNavigate("prompt", id)} />
+          )}
+          {activePage === "prompt" && selectedPromptId && (
+            <PromptPage
+              key={selectedPromptId}
+              promptId={selectedPromptId}
+              onDeleted={() => handleNavigate("new-prompt")}
+            />
+          )}
+          {activePage === "apps" && <AppsPage />}
+          {activePage === "history" && <HistoryPage />}
+          {activePage === "settings" && <SettingsPage />}
         </div>
       </main>
+      <ToastContainer />
     </div>
   );
+}
+
+function getPageTitle(page: Page, promptName: string | undefined): string {
+  if (page === "prompt" && promptName) {
+    return promptName;
+  }
+  if (page === "new-prompt") {
+    return "New Prompt";
+  }
+
+  return page.replace(/-/g, " ");
 }
