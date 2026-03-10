@@ -1,8 +1,7 @@
-<p align="center">
-  <img src="src-tauri/icons/icon.png" width="72" alt="Raypaste logo" />
-</p>
-
-<h1 align="center">Raypaste</h1>
+<h1 align="center">
+  <img src="public/raypaste-logo.png" width="48" alt="Raypaste logo" valign="middle" />
+  Raypaste
+</h1>
 
 <p align="center">
   AI-powered text transformations in any app — triggered by a single hotkey.
@@ -21,7 +20,7 @@
 
 Raypaste is a native desktop app built with **Tauri 2.0** that brings fast, customizable, and intelligent AI responses to any text input — in any application.
 
-Select text anywhere, hit **`Cmd+Ctrl+R`**, and Raypaste transforms it using your configured AI prompts. Results are written back inline or surfaced in a review overlay before you accept.
+Select text anywhere, on Mac use hotkey `⌘ + Ctrl + R`, and Raypaste transforms it using your configured AI prompts. Results are written back inline or surfaced in a review overlay where you can accept, modify, or decline the changes.
 
 ## Platform Support
 
@@ -36,10 +35,10 @@ The core hotkey pipeline, LLM layer, and UI are cross-platform. The macOS-specif
 ## Features
 
 - **Universal** — works with any app: editors, browsers, terminals, design tools
-- **Hotkey-driven** — `Cmd+Ctrl+R` triggers the full AI pipeline instantly
-- **Per-app prompts** — assign different prompts to different applications
+- **Hotkey-driven** — `⌘ + Ctrl + R` allows you to get an AI response in-place instantly.
+- **Per-app prompts** — assign different prompts to different applications for custom repeated workflows
 - **Review mode** — optionally preview and edit the AI output before accepting
-- **Privacy-first direct mode** — your text goes straight to OpenRouter or Cerebras, never through Raypaste servers
+- **Privacy-first direct mode** — for those wanting to keep data between you and your AI provider only you can do so with direct-mode. Your prompt and input text goes straight to OpenRouter or Cerebras, never through Raypaste servers, and the output text is only returned to your device
 - **Prompt library** — create, edit, and manage reusable prompt templates
 
 ## Tech Stack
