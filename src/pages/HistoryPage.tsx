@@ -79,14 +79,12 @@ function appColor(str: string): string {
   return `hsl(${h},38%,36%)`;
 }
 
-// ── sub-components ─────────────────────────────────────────────────────────
-
 function StatusIcon({ row }: { row: CompletionEntry }) {
   if (row.hadError)
     return <XCircle size={13} className="shrink-0 text-red-500" />;
   if (row.wasApplied)
     return <CheckCircle2 size={13} className="shrink-0 text-emerald-500" />;
-  return <MinusCircle size={13} className="shrink-0 text-neutral-600" />;
+  return <MinusCircle size={13} className="shrink-0 text-orange-400" />;
 }
 
 interface EntryCardProps {
@@ -118,6 +116,15 @@ function EntryCard({ row, appName, onClick, onDelete }: EntryCardProps) {
           <span className="truncate text-[11px] text-neutral-400">{name}</span>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
+          {row.isReviewMode ? (
+            <span className="flex items-center gap-0.5 rounded-full bg-violet-500/15 px-1.5 py-0.5 text-[10px] text-violet-400">
+              Review
+            </span>
+          ) : (
+            <span className="rounded-full bg-sky-500/12 px-1.5 py-0.5 text-[10px] text-sky-400">
+              Instant
+            </span>
+          )}
           <StatusIcon row={row} />
           <span className="text-[11px] whitespace-nowrap text-neutral-500">
             {timeAgo(row.timestamp)}
@@ -173,7 +180,7 @@ function DetailDialog({ row, onClose, appName }: DetailDialogProps) {
         </DialogHeader>
         {row && (
           <div className="flex flex-col gap-4 text-xs">
-            <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-neutral-500">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-neutral-500">
               <span>{appName(row.appId)}</span>
               <span>·</span>
               <span>{row.promptName}</span>
@@ -184,6 +191,14 @@ function DetailDialog({ row, onClose, appName }: DetailDialogProps) {
                   <span>·</span>
                   <span>{(row.completionMs / 1000).toFixed(2)}s</span>
                 </>
+              )}
+              <span>·</span>
+              {row.isReviewMode ? (
+                <span className="flex items-center gap-0.5 text-violet-400">
+                  Review
+                </span>
+              ) : (
+                <span className="text-sky-400">Instant</span>
               )}
             </div>
 
@@ -209,16 +224,18 @@ function DetailDialog({ row, onClose, appName }: DetailDialogProps) {
               </div>
             )}
 
-            {!!row.isReviewMode && row.finalText !== null && (
-              <div>
-                <p className="mb-1.5 text-[10px] font-semibold tracking-widest text-neutral-600 uppercase">
-                  Final (edited)
-                </p>
-                <p className="leading-relaxed whitespace-pre-wrap text-neutral-300">
-                  {row.finalText}
-                </p>
-              </div>
-            )}
+            {!!row.isReviewMode &&
+              row.finalText !== null &&
+              row.finalText !== row.outputText && (
+                <div>
+                  <p className="mb-1.5 text-[10px] font-semibold tracking-widest text-neutral-600 uppercase">
+                    Final (edited)
+                  </p>
+                  <p className="leading-relaxed whitespace-pre-wrap text-neutral-300">
+                    {row.finalText}
+                  </p>
+                </div>
+              )}
 
             {!!row.hadError && row.errorMessage && (
               <div>
@@ -365,7 +382,7 @@ function OverviewPanel({
   );
 
   return (
-    <div className="flex h-full flex-col gap-6 overflow-y-auto px-6 py-5">
+    <div className="flex h-full flex-col gap-6 overflow-y-auto border-t px-6 py-5">
       {/* OVERVIEW */}
       <section>
         <div className="mb-3 flex items-center gap-2">
