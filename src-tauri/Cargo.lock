@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "Raypaste"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "core-graphics 0.23.2",
  "objc2 0.5.2",

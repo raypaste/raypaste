@@ -1,6 +1,6 @@
 [package]
 name = "Raypaste"
-version = "0.2.0"
+version = "0.2.1"
 description = "An app for fast, and customizable AI completions anywhere on your computer."
 authors = ["Winston Hsiao"]
 edition = "2021"

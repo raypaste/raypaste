@@ -5,6 +5,7 @@ Raypaste stores all completion history locally in a SQLite database on your devi
 The database is managed by Tauri's `tauri-plugin-sql` (IPC bridge to SQLite). Schema is defined in `src/services/db/schema.ts` using Drizzle ORM, and migrations are applied automatically at app startup.
 
 **Database location (macOS):**
+
 ```
 ~/Library/Application Support/com.raypaste.raypaste/raypaste.db
 ```
@@ -13,45 +14,7 @@ The database is managed by Tauri's `tauri-plugin-sql` (IPC bridge to SQLite). Sc
 
 ## Schema
 
-### `completions` table
-
-Stores individual completion records with full context.
-
-| Column           | Type             | Notes                                                  |
-| ---------------- | ---------------- | ------------------------------------------------------ |
-| `id`             | TEXT PRIMARY KEY | UUID generated client-side                             |
-| `timestamp`      | INTEGER          | Unix milliseconds when the completion was triggered    |
-| `input_text`     | TEXT             | Original selected text                                 |
-| `output_text`    | TEXT             | AI-generated completion                                |
-| `final_text`     | TEXT             | User-edited text in review mode (NULL if not reviewed) |
-| `was_applied`    | INTEGER          | 1 if accepted/applied, 0 if dismissed                  |
-| `is_review_mode` | INTEGER          | 1 if review overlay was shown, 0 for instant mode      |
-| `had_error`      | INTEGER          | 1 if completion failed, 0 on success                   |
-| `error_message`  | TEXT             | Error description if `had_error = 1`, otherwise NULL   |
-| `input_tokens`   | INTEGER          | Total input tokens (system + user prompt combined)     |
-| `output_tokens`  | INTEGER          | Output tokens generated                                |
-| `completion_ms`  | INTEGER          | Wall-clock time in milliseconds                        |
-| `app_id`         | TEXT             | Bundle ID of the app where hotkey was triggered        |
-| `prompt_id`      | TEXT             | UUID of the prompt used                                |
-| `prompt_name`    | TEXT             | Human-readable prompt name (snapshot at time of use)   |
-| `prompt_text`    | TEXT             | Actual prompt text (snapshot at time of use)           |
-| `model`          | TEXT             | Model identifier (e.g. `openai/gpt-oss-120b`)          |
-| `provider`       | TEXT             | Provider name (e.g. `openrouter`, `cerebras`)          |
-
-### `usage_stats` table
-
-Aggregates statistics across all completions. Always contains exactly one row with `id = 'global'`. Updated on every `saveCompletion()` call.
-
-| Column                | Type             | Notes                                        |
-| --------------------- | ---------------- | -------------------------------------------- |
-| `id`                  | TEXT PRIMARY KEY | Always `'global'`                            |
-| `total_completions`   | INTEGER          | Total number of completions                  |
-| `total_applied`       | INTEGER          | Total completions that were applied          |
-| `total_input_tokens`  | INTEGER          | Sum of `input_tokens` across all completions |
-| `total_output_tokens` | INTEGER          | Sum of `output_tokens` across all completions|
-| `total_completion_ms` | INTEGER          | Sum of all completion times                  |
-| `prompt_stats`        | TEXT             | JSON: `{ [promptId]: { uses, applied } }`    |
-| `app_stats`           | TEXT             | JSON: `{ [appId]: { uses, applied } }`       |
+The database consists of two tables: `completions` (individual records) and `usage_stats` (aggregates). View schema definition at `src/services/db/schema.ts`.
 
 ---
 
@@ -100,16 +63,14 @@ On next app launch, all migrations will re-run against the empty file.
 
 ### Data access (`src/services/db/index.ts`)
 
-| Function | Description |
-| --- | --- |
-| `saveCompletion(entry)` | Persists a new completion and updates aggregate stats |
-| `updateCompletionOutcome(id, finalText, wasApplied)` | Records the user's accept/reject action in review mode |
-| `listCompletions(limit, offset, search?)` | Paginated history, newest first; optional full-text search across input, prompt name, and app ID |
-| `listDistinctPrompts()` | Returns `{ promptId, promptName }` pairs for all prompts that have completions |
-| `getUsageStats()` | Returns the single `usage_stats` row with parsed JSON fields |
-| `deleteCompletion(id)` | Removes a single entry (does not update aggregate stats) |
-| `clearAllCompletions()` | Empties the `completions` table (stats are preserved) |
-| `resetAllHistory()` | Drops all completions **and** resets all stats to zero |
+- `saveCompletion(entry)` — Persists a new completion and updates aggregate stats
+- `updateCompletionOutcome(id, finalText, wasApplied)` — Records the user's accept/reject action in review mode
+- `listCompletions(limit, offset, search?)` — Paginated history, newest first; optional full-text search across input, prompt name, and app ID
+- `listDistinctPrompts()` — Returns `{ promptId, promptName }` pairs for all prompts that have completions
+- `getUsageStats()` — Returns the single `usage_stats` row with parsed JSON fields
+- `deleteCompletion(id)` — Removes a single entry (does not update aggregate stats)
+- `clearAllCompletions()` — Empties the `completions` table (stats are preserved)
+- `resetAllHistory()` — Drops all completions **and** resets all stats to zero
 
 ### History page (`src/pages/HistoryPage.tsx`)
 
