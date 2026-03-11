@@ -31,7 +31,13 @@ export function Layout() {
 
   function handleNavigate(page: Page, promptId?: string) {
     setActivePage(page);
-    if (promptId !== undefined) setSelectedPromptId(promptId);
+    if (page === "prompt") {
+      if (promptId !== undefined) {
+        setSelectedPromptId(promptId);
+      }
+    } else {
+      setSelectedPromptId(null);
+    }
   }
 
   const selectedPromptName = selectedPromptId
