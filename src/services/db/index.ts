@@ -3,37 +3,15 @@ import { drizzle } from "drizzle-orm/sqlite-proxy";
 import { eq, desc, like, or } from "drizzle-orm";
 import { completions, usageStats } from "./schema";
 
-export interface CompletionEntry {
-  id: string;
-  timestamp: number;
-  inputText: string;
-  outputText: string;
-  finalText: string | null;
-  wasApplied: number;
-  isReviewMode: number;
-  hadError: number;
-  errorMessage: string | null;
-  inputTokens: number | null;
-  outputTokens: number | null;
-  completionMs: number;
-  appId: string;
-  promptId: string;
-  promptName: string;
-  promptText: string;
-  model: string;
-  provider: string;
-}
+export type CompletionEntry = typeof completions.$inferSelect;
 
-export interface UsageStatsRow {
-  id: string;
-  totalCompletions: number;
-  totalApplied: number;
-  totalInputTokens: number;
-  totalOutputTokens: number;
-  totalCompletionMs: number;
+export type UsageStatsRow = Omit<
+  typeof usageStats.$inferSelect,
+  "promptStats" | "appStats"
+> & {
   promptStats: Record<string, { uses: number; applied: number }>;
   appStats: Record<string, { uses: number; applied: number }>;
-}
+};
 
 const migrationFiles = import.meta.glob<string>("./migrations/*.sql", {
   query: "?raw",
