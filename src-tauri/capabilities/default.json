@@ -5,9 +5,13 @@
   "windows": ["main"],
   "permissions": [
     "core:default",
-"core:window:allow-start-dragging",
+    "core:window:allow-start-dragging",
     "core:webview:allow-create-webview-window",
     "opener:default",
-    "global-shortcut:allow-register"
+    "global-shortcut:allow-register",
+    "sql:allow-load",
+    "sql:allow-execute",
+    "sql:allow-select",
+    "sql:allow-close"
   ]
 }

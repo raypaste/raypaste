@@ -1,4 +1,4 @@
-import type { LLMClient, LLMRequest } from "./types";
+import type { LLMClient, LLMCompletion, LLMRequest } from "./types";
 
 const BASE_URL = "https://openrouter.ai/api/v1/chat/completions";
 const EXTRA_HEADERS = {
@@ -44,7 +44,7 @@ async function parseSSEStream(
 }
 
 export const openrouterClient: LLMClient = {
-  async complete(req: LLMRequest, apiKey: string): Promise<string> {
+  async complete(req: LLMRequest, apiKey: string): Promise<LLMCompletion> {
     const res = await fetch(BASE_URL, {
       method: "POST",
       headers: {
@@ -58,9 +58,16 @@ export const openrouterClient: LLMClient = {
 
     const data = (await res.json()) as {
       choices: { message: { content: string } }[];
+      usage?: { prompt_tokens?: number; completion_tokens?: number };
     };
 
-    return data.choices[0].message.content;
+    return {
+      text: data.choices[0].message.content,
+      usage: {
+        input_tokens: data.usage?.prompt_tokens ?? null,
+        output_tokens: data.usage?.completion_tokens ?? null,
+      },
+    };
   },
 
   async stream(

@@ -20,6 +20,9 @@ pnpm format
 
 # Lint + format together
 pnpm check
+
+# Generate a new DB migration after changing src/services/db/schema.ts
+pnpm db:generate
 ```
 
 There are no automated tests at this time.
@@ -33,7 +36,8 @@ This is a **Tauri 2.0** desktop app: a Rust backend exposes commands via `src-ta
 The hotkey **Cmd+Ctrl+R** triggers the entire pipeline:
 
 1. Rust (`lib.rs`) intercepts the global shortcut via `tauri_plugin_global_shortcut`, calls into `commands::focused_app` and `commands::text` on the main thread, then emits `raypaste://hotkey-triggered` with `{ app, selected_text, target_pid }`.
-2. Frontend (`src/hooks/useHotkeyListener.ts`) listens for that event, looks up the active prompt (per-app mapping → fallback to `"formal"` built-in → first prompt), calls the configured LLM client, then either writes back directly (`invoke("write_text_back")`) or opens the review overlay.
+2. Frontend (`src/hooks/useAICompletionListener.ts`) listens for that event, looks up the active prompt (per-app mapping → falls back to first prompt), calls the configured LLM client, then either writes back directly (`invoke("write_text_back")`) or opens the review overlay.
+3. Completion is saved to local SQLite database and `raypaste://completion-saved` is emitted to notify observers (e.g., `HistoryPage`).
 
 ### Overlay system
 
@@ -46,6 +50,44 @@ The hotkey **Cmd+Ctrl+R** triggers the entire pipeline:
 Overlay types are defined as constants in `src/lib/overlay.ts` (`OVERLAY.review`, `OVERLAY.toast`, `OVERLAY.progress`). Only valid known values are accepted — unknown strings fall through to `NotificationPage`.
 
 Overlay windows are created programmatically via `src/services/overlayWindows.ts` using `WebviewWindow`. The review overlay passes data through `localStorage` using key `raypaste-pending-review` (exported as `REVIEW_STORAGE_KEY`).
+
+### Local history & analytics
+
+All completions are stored in a local SQLite database (`raypaste.db`) with full context:
+- **Input/output** — original text, AI response, user edits (if review mode)
+- **Metadata** — timestamp, app ID, prompt used, model, provider, tokens, duration
+- **Status** — whether applied, dismissed, or error
+- **Aggregates** — per-prompt and per-app statistics
+
+Database is managed via Tauri's `tauri-plugin-sql` with schema in `src/services/db/schema.ts`.
+
+`src/services/db/index.ts` exports:
+- `listCompletions(limit, offset)` — paginated retrieval
+- `saveCompletion(entry)` — persist + update aggregates
+- `updateCompletionOutcome(id, finalText, wasApplied)` — record review action
+- `getUsageStats()` — aggregate stats
+- `deleteCompletion(id)` / `clearAllCompletions()` — cleanup
+
+After each completion is saved, `useAICompletionListener` emits `raypaste://completion-saved`, which triggers `HistoryPage` to refresh.
+
+#### Database migrations
+
+Migrations use **drizzle-kit** for generation and run automatically at app startup via `PRAGMA user_version`.
+
+**To make a schema change:**
+
+1. Edit `src/services/db/schema.ts`
+2. Run `pnpm db:generate` — drizzle-kit diffs the schema and writes a new `.sql` file to `src/services/db/migrations/`
+3. Vite bundles the migration files as raw strings via `import.meta.glob`
+4. On next app launch, `runMigrations()` in `db/index.ts` checks `PRAGMA user_version`, applies any pending migrations in order, and increments the version after each one
+
+**Key details:**
+- Migration files live in `src/services/db/migrations/` and are committed to the repo
+- The drizzle-kit CLI only _generates_ SQL — it never connects to the runtime DB (which is accessed through Tauri's IPC bridge, not directly)
+- `drizzle.config.ts` at the project root configures the generator
+- Never edit generated migration files; create a new one instead
+
+For details, see [LOCAL_HISTORY_STORAGE.md](docs/LOCAL_HISTORY_STORAGE.md).
 
 ### State management
 
@@ -78,9 +120,16 @@ All AppKit/AX calls must run on the main thread — the hotkey handler uses `run
 ### Frontend structure
 
 - `src/components/RenderWindow.tsx` — entry point; routes to `App`, `ReviewPage`, or `NotificationPage` based on `?overlay` param
-- `src/components/Layout.tsx` — main app shell: holds `activePage` + `selectedPromptId` state, mounts `useHotkeyListener`
+- `src/components/Layout.tsx` — main app shell: holds `activePage` + `selectedPromptId` state, mounts `useAICompletionListener`
 - `src/components/Sidebar/` — nav; `SidebarNav.tsx` defines the `Page` type
-- `src/pages/` — one file per page (`NewPromptPage`, `PromptPage`, `AppsPage`, `HistoryPage`, `SettingsPage`, `ReviewPage`, `NotificationPage`)
+- `src/pages/`
+  - `HistoryPage.tsx` — paginated completion log with stats bar, filtering, detail view, delete actions
+  - `NewPromptPage.tsx` — create new prompt
+  - `PromptPage.tsx` — edit/delete existing prompt
+  - `AppsPage.tsx` — assign prompts to specific apps
+  - `SettingsPage.tsx` — LLM provider/key config, review mode toggle
+  - `ReviewPage.tsx` — overlay for reviewing AI output before applying
+  - `NotificationPage.tsx` — toast + progress overlays
 - `src/components/ui/` — low-level UI primitives (Radix UI wrappers)
 - `src/lib/utils.ts` — `cn()` helper (clsx + tailwind-merge)
 
