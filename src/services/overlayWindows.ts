@@ -58,6 +58,7 @@ export function showToastOverlay(
 }
 
 export interface PendingReview {
+  completionId: string;
   completedText: string;
   originalText: string;
   targetPid: number;

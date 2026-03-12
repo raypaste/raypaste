@@ -13,7 +13,7 @@ pnpm tauri dev
 
 ## API Keys and LLM Connections
 
-Raypate offers 2 ways to get LLM completions **direct-to-provider** and in the future **raypaste-api**.
+Raypaste offers 2 ways to get LLM completions **direct-to-provider** and in the future **raypaste-api**.
 You can configure your options in the app settings.
 
 ### Direct to Provider

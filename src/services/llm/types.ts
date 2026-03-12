@@ -16,8 +16,18 @@ export interface LLMRequest {
   stream?: boolean;
 }
 
+export interface LLMUsage {
+  input_tokens: number | null;
+  output_tokens: number | null;
+}
+
+export interface LLMCompletion {
+  text: string;
+  usage: LLMUsage;
+}
+
 export interface LLMClient {
-  complete(req: LLMRequest, apiKey: string): Promise<string>;
+  complete(req: LLMRequest, apiKey: string): Promise<LLMCompletion>;
   stream(
     req: LLMRequest,
     apiKey: string,

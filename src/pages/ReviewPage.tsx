@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { emit } from "@tauri-apps/api/event";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { cn } from "#/lib/utils";
 import {
@@ -48,6 +49,11 @@ export function ReviewPage() {
     try {
       await invoke("write_text_back", { text, targetPid: data.targetPid });
       localStorage.removeItem(REVIEW_STORAGE_KEY);
+      await emit("raypaste://review-outcome", {
+        completionId: data.completionId,
+        finalText: text,
+        wasApplied: true,
+      });
       await win.close();
     } catch (error) {
       setApplied(false);
@@ -57,8 +63,15 @@ export function ReviewPage() {
 
   const handleDismiss = useCallback(async () => {
     localStorage.removeItem(REVIEW_STORAGE_KEY);
+    if (data) {
+      await emit("raypaste://review-outcome", {
+        completionId: data.completionId,
+        finalText: null,
+        wasApplied: false,
+      });
+    }
     await win.close();
-  }, [win]);
+  }, [data, win]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

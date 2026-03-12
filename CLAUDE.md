@@ -5,97 +5,71 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-# Development (starts Vite + Tauri dev window)
-pnpm tauri dev
-
-# Production build
-pnpm tauri build
-
-# Lint
-pnpm lint
-pnpm lint:fix
-
-# Format
-pnpm format
-
-# Lint + format together
-pnpm check
+pnpm tauri dev        # Development (starts Vite + Tauri dev window)
+pnpm tauri build      # Production build
+pnpm lint / lint:fix  # Lint
+pnpm format           # Format (Prettier sorts Tailwind classes)
+pnpm check            # Lint + format together
+pnpm db:generate      # Generate migration after editing src/services/db/schema.ts
 ```
 
-There are no automated tests at this time.
+No automated tests.
 
 ## Architecture
 
-This is a **Tauri 2.0** desktop app: a Rust backend exposes commands via `src-tauri/src/lib.rs`, and a React 19 + TypeScript frontend lives in `src/`.
+**Tauri 2.0** desktop app — Rust backend (`src-tauri/src/lib.rs`) + React 19/TypeScript frontend (`src/`).
 
 ### Core data flow
 
-The hotkey **Cmd+Ctrl+R** triggers the entire pipeline:
+Hotkey **Cmd+Ctrl+R** triggers the pipeline:
 
-1. Rust (`lib.rs`) intercepts the global shortcut via `tauri_plugin_global_shortcut`, calls into `commands::focused_app` and `commands::text` on the main thread, then emits `raypaste://hotkey-triggered` with `{ app, selected_text, target_pid }`.
-2. Frontend (`src/hooks/useHotkeyListener.ts`) listens for that event, looks up the active prompt (per-app mapping → fallback to `"formal"` built-in → first prompt), calls the configured LLM client, then either writes back directly (`invoke("write_text_back")`) or opens the review overlay.
+1. Rust (`lib.rs`) intercepts via `tauri_plugin_global_shortcut`, calls `commands::focused_app` + `commands::text` on the main thread, emits `raypaste://hotkey-triggered` with `{ app, selected_text, target_pid }`.
+2. `src/hooks/useAICompletionListener.ts` listens, resolves active prompt (per-app mapping → `defaultPromptId` fallback), calls LLM client, then either `invoke("write_text_back")` or opens the review overlay.
+3. Completion is saved to SQLite; `raypaste://completion-saved` is emitted to refresh `HistoryPage`.
 
 ### Overlay system
 
-`src/main.tsx` renders `<RenderWindow />`, which reads the `?overlay` query param and routes to the appropriate UI (`src/components/RenderWindow.tsx`):
-
-- No params → main app (`<App />`)
+`src/main.tsx` → `<RenderWindow />` routes on `?overlay` query param:
+- _(none)_ → `<App />` (main window)
 - `?overlay=review` → `<ReviewPage />` (editable completion, accept/reject)
-- `?overlay=toast` or `?overlay=progress` → `<NotificationPage />`
+- `?overlay=toast|progress` → `<NotificationPage />`
 
-Overlay types are defined as constants in `src/lib/overlay.ts` (`OVERLAY.review`, `OVERLAY.toast`, `OVERLAY.progress`). Only valid known values are accepted — unknown strings fall through to `NotificationPage`.
-
-Overlay windows are created programmatically via `src/services/overlayWindows.ts` using `WebviewWindow`. The review overlay passes data through `localStorage` using key `raypaste-pending-review` (exported as `REVIEW_STORAGE_KEY`).
+Constants live in `src/lib/overlay.ts`. Overlays are created via `src/services/overlayWindows.ts` (`WebviewWindow`). Review overlay passes data via `localStorage` key `raypaste-pending-review` (`REVIEW_STORAGE_KEY`).
 
 ### State management
 
-All stores use Zustand with `persist` middleware (localStorage):
-
-- `settingsStore` — LLM mode (`"direct"` | `"api"`), provider (`"openrouter"` | `"cerebras"`), API keys, model (currently hardcoded to `openai/gpt-oss-120b`), reviewMode
-- `promptsStore` — CRUD for prompts; each prompt has `appIds[]` for per-app mapping; `defaultPromptId` for fallback. App assignments are **exclusive** — `assignAppToPrompt` removes the app from all other prompts; `unassignApp` removes from all.
-- `appsStore` — installed macOS apps list (populated via `commands::apps::list_apps`)
-
-All stores are re-exported from `src/stores/index.ts`.
+Zustand + `persist` (localStorage), all re-exported from `src/stores/index.ts`:
+- `settingsStore` — LLM mode (`"direct"` | `"api"`), provider (`"openrouter"` | `"cerebras"`), API keys, model, `reviewMode`
+- `promptsStore` — CRUD; each prompt has `appIds[]`. App assignments are **exclusive** — `assignAppToPrompt` removes the app from all other prompts.
+- `appsStore` — macOS installed apps list (via `commands::apps::list_apps`)
 
 ### LLM service layer
 
-`src/services/llm/index.ts` exports `getLLMClient()` and `getApiKey()` which read from `settingsStore` at call time.
-
-- `mode: "api"` → `raypasteApiClient` (Raypaste hosted API, coming soon)
+`src/services/llm/index.ts` exports `getLLMClient()` / `getApiKey()` (read `settingsStore` at call time):
+- `mode: "api"` → `raypasteApiClient` (hosted, coming soon)
 - `mode: "direct"` + `provider: "cerebras"` → `cerebrasClient`
 - `mode: "direct"` + `provider: "openrouter"` → `openrouterClient`
 
+### Database (SQLite via `tauri-plugin-sql`)
+
+Schema: `src/services/db/schema.ts`. `src/services/db/index.ts` exports:
+`listCompletions`, `saveCompletion`, `updateCompletionOutcome`, `getUsageStats`, `deleteCompletion`, `clearAllCompletions`.
+
+**Schema changes:** edit schema → `pnpm db:generate` → commit the new `.sql` in `src/services/db/migrations/`. Migrations run automatically at startup via `PRAGMA user_version`. Never edit generated migration files.
+
 ### Rust commands
 
-`src-tauri/src/commands/` contains three modules registered in `invoke_handler`:
+`src-tauri/src/commands/` — three modules:
+- `apps::list_apps`
+- `focused_app::get_focused_app` / `get_frontmost_pid` — AXUIElement bundle ID + PID
+- `text::get_selected_text` / `write_text_back` — AX read/write
 
-- `apps::list_apps` — lists installed macOS apps
-- `focused_app::get_focused_app` / `get_focused_app_inner` / `get_frontmost_pid` — AXUIElement bundle ID + PID
-- `text::get_selected_text` / `get_selected_text_inner` / `write_text_back` — AX read/write of selected text
+All AppKit/AX calls must run on the main thread (`run_on_main_thread`).
 
-All AppKit/AX calls must run on the main thread — the hotkey handler uses `run_on_main_thread` for this.
+### Frontend conventions
 
-### Frontend structure
-
-- `src/components/RenderWindow.tsx` — entry point; routes to `App`, `ReviewPage`, or `NotificationPage` based on `?overlay` param
-- `src/components/Layout.tsx` — main app shell: holds `activePage` + `selectedPromptId` state, mounts `useHotkeyListener`
-- `src/components/Sidebar/` — nav; `SidebarNav.tsx` defines the `Page` type
-- `src/pages/` — one file per page (`NewPromptPage`, `PromptPage`, `AppsPage`, `HistoryPage`, `SettingsPage`, `ReviewPage`, `NotificationPage`)
-- `src/components/ui/` — low-level UI primitives (Radix UI wrappers)
-- `src/lib/utils.ts` — `cn()` helper (clsx + tailwind-merge)
-
-Navigation is pure React state in `Layout` — no router library.
-
-### Path alias
-
-`#` resolves to `./src`. Use `#/components/...`, `#/lib/...`, etc. for all internal imports.
-
-### Styling
-
-Tailwind CSS v4 (Vite plugin). Prettier sorts Tailwind classes automatically on format. Dark-themed UI with a transparent, overlay-titlebar.
-
-### Key config
-
-- Window: 1200x800, transparent, `titleBarStyle: "Overlay"`, min 900x600
-- Vite dev server: port 1420 (strict)
-- `__APP_VERSION__` global injected from `package.json`
+- Path alias: `#` → `./src` (use `#/components/...`, `#/services/...`, etc.)
+- Navigation: pure React state in `Layout.tsx` — no router library
+- Pages in `src/pages/`, UI primitives in `src/components/ui/` (Radix UI wrappers)
+- Tailwind CSS v4; dark-themed, transparent overlay-titlebar window (1200×800, min 900×600)
+- `__APP_VERSION__` global injected from `package.json`; Vite dev server on port 1420

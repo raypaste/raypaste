@@ -1,19 +1,216 @@
-import { BookOpen } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { listen } from "@tauri-apps/api/event";
+import { Search, Trash2 } from "lucide-react";
+import { useAppsStore } from "#/stores";
+import {
+  listCompletions,
+  listDistinctPrompts,
+  getUsageStats,
+  deleteCompletion,
+  clearAllCompletions,
+  resetAllHistory,
+  type CompletionEntry,
+} from "#/services/db";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from "#/components/ui/alert-dialog";
+import { EntryCard } from "#/components/history/EntryCard";
+import { DetailDialog } from "#/components/history/DetailDialog";
+import { OverviewPanel } from "#/components/history/OverviewPanel";
+import {
+  DIALOG_CONTENT_CLS,
+  DIALOG_CANCEL_CLS,
+  DIALOG_ACTION_DESTRUCTIVE_CLS,
+} from "#/components/history/constants";
+
+const LIST_LIMIT = 200;
 
 export function HistoryPage() {
+  const [rows, setRows] = useState<CompletionEntry[]>([]);
+  const [stats, setStats] = useState<Awaited<
+    ReturnType<typeof getUsageStats>
+  > | null>(null);
+  const [promptNames, setPromptNames] = useState<Record<string, string>>({});
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [detailRow, setDetailRow] = useState<CompletionEntry | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const { apps } = useAppsStore();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const appName = useCallback(
+    (bundleId: string) =>
+      apps.find((a) => a.bundleId === bundleId)?.name ?? bundleId,
+    [apps],
+  );
+
+  // Fetch data whenever refreshKey or debouncedSearch changes
+  useEffect(() => {
+    const query = debouncedSearch || undefined;
+    Promise.all([
+      listCompletions(LIST_LIMIT, 0, query),
+      getUsageStats(),
+      listDistinctPrompts(),
+    ])
+      .then(([fetched, s, names]) => {
+        setRows(fetched);
+        setStats(s);
+        setPromptNames(
+          Object.fromEntries(names.map((n) => [n.promptId, n.promptName])),
+        );
+      })
+      .catch(() => {});
+  }, [refreshKey, debouncedSearch]);
+
+  // Refresh when a new completion is saved
+  const doRefresh = useCallback(() => setRefreshKey((k) => k + 1), []);
+  useEffect(() => {
+    const unlisten = listen("raypaste://completion-saved", doRefresh);
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, [doRefresh]);
+
+  const handleSearchChange = (val: string) => {
+    setSearch(val);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setDebouncedSearch(val), 250);
+  };
+
+  const handleDelete = (id: string) => {
+    deleteCompletion(id)
+      .then(() => {
+        setDeletingId(null);
+        setRefreshKey((k) => k + 1);
+      })
+      .catch(() => {});
+  };
+
+  const handleClearHistory = () => {
+    clearAllCompletions()
+      .then(() => setRefreshKey((k) => k + 1))
+      .catch(() => {});
+  };
+
+  const handleResetAll = () => {
+    resetAllHistory()
+      .then(() => {
+        setSearch("");
+        setDebouncedSearch("");
+        setRefreshKey((k) => k + 1);
+      })
+      .catch(() => {});
+  };
+
+  const isEmpty = !stats || stats.totalCompletions === 0;
+
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
-      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/5">
-        <span className="text-2xl text-neutral-100">
-          <BookOpen />
-        </span>
+    <div className="flex h-full overflow-hidden">
+      {/* ── Left panel ── */}
+      <div className="flex w-[42%] shrink-0 flex-col border-r border-white/6">
+        {/* Search */}
+        <div className="shrink-0 border-b border-white/6 px-4 py-3">
+          <div className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2">
+            <Search size={13} className="shrink-0 text-neutral-500" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              placeholder="Search history…"
+              className="w-full bg-transparent text-[13px] text-neutral-200 placeholder:text-neutral-600 focus:outline-none"
+            />
+          </div>
+        </div>
+
+        {/* List */}
+        {isEmpty ? (
+          <div className="flex flex-1 items-center justify-center text-[13px] text-neutral-600">
+            No completions yet.
+          </div>
+        ) : rows.length === 0 ? (
+          <div className="flex flex-1 items-center justify-center text-[13px] text-neutral-600">
+            No results.
+          </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto">
+            {rows.map((row) => (
+              <EntryCard
+                key={row.id}
+                row={row}
+                appName={appName}
+                onClick={() => setDetailRow(row)}
+                onDelete={() => setDeletingId(row.id)}
+              />
+            ))}
+          </div>
+        )}
       </div>
-      <div>
-        <h2 className="text-lg font-semibold text-neutral-100">History</h2>
-        <p className="mt-1 text-sm text-neutral-400">
-          View past responses — coming soon.
-        </p>
+
+      {/* ── Right panel ── */}
+      <div className="flex-1 overflow-hidden">
+        {stats ? (
+          <OverviewPanel
+            stats={stats}
+            promptNames={promptNames}
+            onClearHistory={handleClearHistory}
+            onResetAll={handleResetAll}
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center text-[13px] text-neutral-600">
+            Loading…
+          </div>
+        )}
       </div>
+
+      {/* Detail dialog */}
+      <DetailDialog
+        row={detailRow}
+        onClose={() => setDetailRow(null)}
+        appName={appName}
+      />
+
+      {/* Delete confirmation */}
+      <AlertDialog
+        open={deletingId !== null}
+        onOpenChange={(open) => !open && setDeletingId(null)}
+      >
+        <AlertDialogContent size="sm" className={DIALOG_CONTENT_CLS}>
+          <AlertDialogHeader>
+            <AlertDialogMedia className="bg-white/6">
+              <Trash2 className="text-neutral-300" />
+            </AlertDialogMedia>
+            <AlertDialogTitle className="text-[15px] font-semibold">
+              Delete this entry?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-neutral-500">
+              This log entry will be permanently removed. Stats are not
+              affected.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className={DIALOG_CANCEL_CLS}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deletingId) handleDelete(deletingId);
+              }}
+              className={DIALOG_ACTION_DESTRUCTIVE_CLS}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
