@@ -1,15 +1,18 @@
 import { useEffect, useState } from "react";
-import { invoke, convertFileSrc } from "@tauri-apps/api/core";
+import { invoke } from "@tauri-apps/api/core";
 import { Search } from "lucide-react";
 import { cn } from "#/lib/utils";
 import { useAppsStore, usePromptsStore } from "#/stores";
 import type { InstalledApp } from "#/stores";
+import { AppPromptCombobox } from "#/pages/apps/AppPromptCombobox";
+import { useAppIcons } from "#/hooks/useAppIcons";
 
 export function AppsPage() {
   const { apps, setApps } = useAppsStore();
   const { prompts, assignAppToPrompt, unassignApp } = usePromptsStore();
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(apps.length === 0);
+  const iconSrcByBundleId = useAppIcons(apps);
 
   useEffect(() => {
     if (apps.length > 0) return;
@@ -76,9 +79,9 @@ export function AppsPage() {
                 className="hover:bg-muted/40 flex items-center gap-3 rounded-lg px-3 py-2"
               >
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center">
-                  {app.iconPath ? (
+                  {iconSrcByBundleId[app.bundleId] ? (
                     <img
-                      src={convertFileSrc(app.iconPath)}
+                      src={iconSrcByBundleId[app.bundleId]}
                       alt=""
                       className="h-8 w-8 object-contain"
                     />
@@ -89,21 +92,11 @@ export function AppsPage() {
                 <div className="min-w-0 flex-1">
                   <p className="text-foreground truncate text-sm">{app.name}</p>
                 </div>
-                <select
-                  value={getAssignedPromptId(app.bundleId)}
-                  onChange={(e) => handleAssign(app.bundleId, e.target.value)}
-                  className={cn(
-                    "border-border bg-card text-muted-foreground shrink-0 rounded-md border px-2 py-1 text-xs",
-                    "focus:outline-none",
-                  )}
-                >
-                  <option value="">No prompt</option>
-                  {prompts.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
+                <AppPromptCombobox
+                  prompts={prompts}
+                  assignedPromptId={getAssignedPromptId(app.bundleId)}
+                  onAssign={(promptId) => handleAssign(app.bundleId, promptId)}
+                />
               </div>
             ))}
           </div>

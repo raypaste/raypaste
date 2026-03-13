@@ -66,6 +66,8 @@ Schema: `src/services/db/schema.ts`. `src/services/db/index.ts` exports:
 
 All AppKit/AX calls must run on the main thread (`run_on_main_thread`).
 
+**App icons:** `.icns` → PNG conversion + caching pipeline — see `docs/APP_ICONS.md`.
+
 ### Frontend conventions
 
 - Path alias: `#` → `./src` (use `#/components/...`, `#/services/...`, etc.)

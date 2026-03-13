@@ -8,6 +8,7 @@ import {
 import { cn } from "#/lib/utils";
 import { usePromptsStore, useAppsStore } from "#/stores";
 import type { Page } from "./SidebarNav";
+import { useAppIcons } from "#/hooks/useAppIcons";
 
 interface PromptsSectionProps {
   selectedPromptId: string | null;
@@ -30,6 +31,8 @@ export function PromptsSection({
       return { app, prompts: assignedPrompts };
     })
     .filter((g) => g.prompts.length > 0);
+
+  const iconSrcByBundleId = useAppIcons(appGroups.map((g) => g.app));
 
   const [openGroups, setOpenGroups] = useState<Set<string> | null>(null);
   const resolvedOpenGroups =
@@ -90,14 +93,23 @@ export function PromptsSection({
               open={isOpen}
               onOpenChange={() => toggleGroup(app.bundleId)}
             >
-              <CollapsibleTrigger className="text-foreground/80 hover:bg-secondary hover:text-foreground flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors select-none">
+              <CollapsibleTrigger className="text-foreground/80 hover:bg-secondary hover:text-foreground flex w-full cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors select-none">
+                {iconSrcByBundleId[app.bundleId] ? (
+                  <img
+                    src={iconSrcByBundleId[app.bundleId]}
+                    alt=""
+                    className="h-5 w-5 shrink-0 object-contain"
+                  />
+                ) : (
+                  <div className="bg-muted/50 h-5 w-5 shrink-0 rounded-sm" />
+                )}
+                <span className="truncate">{app.name}</span>
                 <ChevronRight
                   className={cn(
-                    "h-3.5 w-3.5 shrink-0 transition-transform duration-150",
+                    "ml-auto h-3.5 w-3.5 shrink-0 transition-transform duration-150",
                     isOpen && "rotate-90",
                   )}
                 />
-                <span className="truncate">{app.name}</span>
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <div className="mt-0.5 space-y-0.5">

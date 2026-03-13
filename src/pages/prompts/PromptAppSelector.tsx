@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useAppsStore } from "#/stores";
 import type { InstalledApp } from "#/stores";
+import { useAppIcons } from "#/hooks/useAppIcons";
 import {
   Combobox,
   ComboboxChips,
@@ -14,6 +15,14 @@ import {
   ComboboxTrigger,
   useComboboxAnchor,
 } from "#/components/ui/combobox";
+
+function AppIcon({ src }: { src: string | undefined }) {
+  return src ? (
+    <img src={src} alt="" className="h-5 w-5 object-contain" />
+  ) : (
+    <div className="bg-muted/50 h-5 w-5 rounded" />
+  );
+}
 
 interface PromptAppSelectorProps {
   assignedAppIds: string[];
@@ -33,6 +42,8 @@ export function PromptAppSelector({
       .then(setApps)
       .catch(() => {});
   }, [apps.length, setApps]);
+
+  const iconSrcByBundleId = useAppIcons(apps);
 
   const anchor = useComboboxAnchor();
 
@@ -61,7 +72,11 @@ export function PromptAppSelector({
           className="border-border bg-muted/30 focus-within:border-ring min-h-10 rounded-lg"
         >
           {assignedApps.map((app) => (
-            <ComboboxChip key={app.bundleId} className="p-1">
+            <ComboboxChip
+              key={app.bundleId}
+              className="flex items-center gap-1.5 p-1"
+            >
+              <AppIcon src={iconSrcByBundleId[app.bundleId]} />
               {app.name}
             </ComboboxChip>
           ))}
@@ -77,8 +92,9 @@ export function PromptAppSelector({
               <ComboboxItem
                 key={app.bundleId}
                 value={app.bundleId}
-                className="py-2 pl-3"
+                className="flex items-center gap-2 py-2 pl-3"
               >
+                <AppIcon src={iconSrcByBundleId[app.bundleId]} />
                 {app.name}
               </ComboboxItem>
             ))}

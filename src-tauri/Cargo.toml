@@ -29,4 +29,5 @@ objc2-foundation = { version = "0.2", features = ["NSString", "NSArray", "NSRunL
 objc2-app-kit = { version = "0.2", features = ["NSWorkspace", "NSRunningApplication", "NSPasteboard"] }
 core-graphics = { version = "0.23", features = ["highsierra"] }
 tauri-plugin-sql = { version = "2", features = ["sqlite"] }
+base64 = "0.22"
 
