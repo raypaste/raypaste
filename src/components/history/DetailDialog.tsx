@@ -14,16 +14,21 @@ interface DetailDialogProps {
 }
 
 export function DetailDialog({ row, onClose, appName }: DetailDialogProps) {
+  const hasFinal =
+    !!row?.isReviewMode &&
+    row.finalText !== null &&
+    row.finalText !== row.outputText;
+
   return (
     <Dialog open={row !== null} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-card text-card-foreground ring-border max-w-lg ring-1">
+      <DialogContent className="bg-card text-card-foreground ring-border flex max-h-[80vh] w-full max-w-3xl flex-col ring-1 sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="text-foreground text-sm font-semibold">
             Details
           </DialogTitle>
         </DialogHeader>
         {row && (
-          <div className="flex flex-col gap-4 text-xs">
+          <div className="flex min-h-0 flex-1 flex-col gap-4 text-xs">
             <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px]">
               <span>{appName(row.appId)}</span>
               <span>·</span>
@@ -50,49 +55,49 @@ export function DetailDialog({ row, onClose, appName }: DetailDialogProps) {
               <span className="font-mono">{row.model}</span>
             </div>
 
-            <div>
-              <p className="text-muted-foreground/60 mb-1.5 text-[10px] font-semibold tracking-widest uppercase">
-                Input
-              </p>
-              <p className="text-foreground/80 leading-relaxed whitespace-pre-wrap">
-                {row.inputText}
-              </p>
-            </div>
-
-            {!row.hadError && (
-              <div>
-                <p className="text-muted-foreground/60 mb-1.5 text-[10px] font-semibold tracking-widest uppercase">
-                  Output
+            <div className="grid min-h-0 flex-1 grid-cols-2 gap-3 overflow-hidden">
+              <div className="flex flex-col overflow-hidden">
+                <p className="text-muted-foreground/60 mb-1.5 shrink-0 text-[10px] font-semibold tracking-widest uppercase">
+                  Input
                 </p>
-                <p className="text-foreground/80 leading-relaxed whitespace-pre-wrap">
-                  {row.outputText || (
-                    <span className="text-muted-foreground/60 italic">
-                      empty
-                    </span>
-                  )}
+                <p className="text-foreground/80 min-h-0 flex-1 overflow-y-auto leading-relaxed whitespace-pre-wrap">
+                  {row.inputText}
                 </p>
               </div>
-            )}
 
-            {!!row.isReviewMode &&
-              row.finalText !== null &&
-              row.finalText !== row.outputText && (
-                <div>
-                  <p className="text-muted-foreground/60 mb-1.5 text-[10px] font-semibold tracking-widest uppercase">
-                    Final (edited)
+              {row.hadError ? (
+                <div className="flex flex-col overflow-hidden">
+                  <p className="mb-1.5 shrink-0 text-[10px] font-semibold tracking-widest text-red-600 uppercase">
+                    Error
                   </p>
-                  <p className="text-foreground/80 leading-relaxed whitespace-pre-wrap">
-                    {row.finalText}
+                  <p className="min-h-0 flex-1 overflow-y-auto text-red-400">
+                    {row.errorMessage}
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col overflow-hidden">
+                  <p className="text-muted-foreground/60 mb-1.5 shrink-0 text-[10px] font-semibold tracking-widest uppercase">
+                    {hasFinal ? "Output (original)" : "Output"}
+                  </p>
+                  <p className="text-foreground/80 min-h-0 flex-1 overflow-y-auto leading-relaxed whitespace-pre-wrap">
+                    {row.outputText || (
+                      <span className="text-muted-foreground/60 italic">
+                        empty
+                      </span>
+                    )}
                   </p>
                 </div>
               )}
+            </div>
 
-            {!!row.hadError && row.errorMessage && (
-              <div>
-                <p className="mb-1.5 text-[10px] font-semibold tracking-widest text-red-600 uppercase">
-                  Error
+            {hasFinal && (
+              <div className="flex flex-col overflow-hidden">
+                <p className="text-muted-foreground/60 mb-1.5 shrink-0 text-[10px] font-semibold tracking-widest uppercase">
+                  Final (edited)
                 </p>
-                <p className="text-red-400">{row.errorMessage}</p>
+                <p className="text-foreground/80 max-h-32 overflow-y-auto leading-relaxed whitespace-pre-wrap">
+                  {row.finalText}
+                </p>
               </div>
             )}
           </div>
