@@ -18,7 +18,7 @@ import {
   DIALOG_CONTENT_CLS,
   DIALOG_CANCEL_CLS,
   DIALOG_ACTION_DESTRUCTIVE_CLS,
-} from "#/components/history/constants";
+} from "#/pages/history/constants";
 
 function ClearHistoryDialog({ onConfirm }: { onConfirm: () => void }) {
   const [open, setOpen] = useState(false);
