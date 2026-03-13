@@ -284,7 +284,9 @@ export function SettingsPage() {
             className="w-full"
           />
           <ComboboxContent>
-            <ComboboxEmpty>No models found</ComboboxEmpty>
+            {filteredModelOptions.length === 0 && (
+              <ComboboxEmpty>No models found</ComboboxEmpty>
+            )}
             <ComboboxList>
               {filteredModelOptions.map((m) => (
                 <ComboboxItem
