@@ -116,28 +116,28 @@ export function HistoryPage() {
   return (
     <div className="flex h-full overflow-hidden">
       {/* ── Left panel ── */}
-      <div className="flex w-[42%] shrink-0 flex-col border-r border-white/6">
+      <div className="border-border flex w-[42%] shrink-0 flex-col border-r">
         {/* Search */}
-        <div className="shrink-0 border-b border-white/6 px-4 py-3">
-          <div className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2">
-            <Search size={13} className="shrink-0 text-neutral-500" />
+        <div className="border-border shrink-0 border-b px-4 py-3">
+          <div className="bg-muted/40 flex items-center gap-2 rounded-lg px-3 py-2">
+            <Search size={13} className="text-muted-foreground shrink-0" />
             <input
               type="text"
               value={search}
               onChange={(e) => handleSearchChange(e.target.value)}
               placeholder="Search history…"
-              className="w-full bg-transparent text-[13px] text-neutral-200 placeholder:text-neutral-600 focus:outline-none"
+              className="text-foreground placeholder:text-muted-foreground w-full bg-transparent text-[13px] focus:outline-none"
             />
           </div>
         </div>
 
         {/* List */}
         {isEmpty ? (
-          <div className="flex flex-1 items-center justify-center text-[13px] text-neutral-600">
+          <div className="text-muted-foreground flex flex-1 items-center justify-center text-[13px]">
             No completions yet.
           </div>
         ) : rows.length === 0 ? (
-          <div className="flex flex-1 items-center justify-center text-[13px] text-neutral-600">
+          <div className="text-muted-foreground flex flex-1 items-center justify-center text-[13px]">
             No results.
           </div>
         ) : (
@@ -165,7 +165,7 @@ export function HistoryPage() {
             onResetAll={handleResetAll}
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-[13px] text-neutral-600">
+          <div className="text-muted-foreground flex h-full items-center justify-center text-[13px]">
             Loading…
           </div>
         )}
@@ -185,13 +185,13 @@ export function HistoryPage() {
       >
         <AlertDialogContent size="sm" className={DIALOG_CONTENT_CLS}>
           <AlertDialogHeader>
-            <AlertDialogMedia className="bg-white/6">
-              <Trash2 className="text-neutral-300" />
+            <AlertDialogMedia className="bg-muted/40">
+              <Trash2 className="text-muted-foreground" />
             </AlertDialogMedia>
             <AlertDialogTitle className="text-[15px] font-semibold">
               Delete this entry?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-neutral-500">
+            <AlertDialogDescription className="text-muted-foreground">
               This log entry will be permanently removed. Stats are not
               affected.
             </AlertDialogDescription>

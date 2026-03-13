@@ -16,15 +16,15 @@ interface DetailDialogProps {
 export function DetailDialog({ row, onClose, appName }: DetailDialogProps) {
   return (
     <Dialog open={row !== null} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-lg bg-neutral-900 text-neutral-100 ring-1 ring-white/10">
+      <DialogContent className="bg-card text-card-foreground ring-border max-w-lg ring-1">
         <DialogHeader>
-          <DialogTitle className="text-sm font-semibold text-neutral-200">
+          <DialogTitle className="text-foreground text-sm font-semibold">
             Details
           </DialogTitle>
         </DialogHeader>
         {row && (
           <div className="flex flex-col gap-4 text-xs">
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-neutral-500">
+            <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px]">
               <span>{appName(row.appId)}</span>
               <span>·</span>
               <span>{row.promptName}</span>
@@ -38,11 +38,11 @@ export function DetailDialog({ row, onClose, appName }: DetailDialogProps) {
               )}
               <span>·</span>
               {row.isReviewMode ? (
-                <span className="flex items-center gap-0.5 text-violet-400">
+                <span className="flex items-center gap-0.5 text-violet-500">
                   Review
                 </span>
               ) : (
-                <span className="text-sky-400">Instant</span>
+                <span className="text-sky-500">Instant</span>
               )}
               <span>·</span>
               <span className="capitalize">{row.provider}</span>
@@ -51,22 +51,24 @@ export function DetailDialog({ row, onClose, appName }: DetailDialogProps) {
             </div>
 
             <div>
-              <p className="mb-1.5 text-[10px] font-semibold tracking-widest text-neutral-600 uppercase">
+              <p className="text-muted-foreground/60 mb-1.5 text-[10px] font-semibold tracking-widest uppercase">
                 Input
               </p>
-              <p className="leading-relaxed whitespace-pre-wrap text-neutral-300">
+              <p className="text-foreground/80 leading-relaxed whitespace-pre-wrap">
                 {row.inputText}
               </p>
             </div>
 
             {!row.hadError && (
               <div>
-                <p className="mb-1.5 text-[10px] font-semibold tracking-widest text-neutral-600 uppercase">
+                <p className="text-muted-foreground/60 mb-1.5 text-[10px] font-semibold tracking-widest uppercase">
                   Output
                 </p>
-                <p className="leading-relaxed whitespace-pre-wrap text-neutral-300">
+                <p className="text-foreground/80 leading-relaxed whitespace-pre-wrap">
                   {row.outputText || (
-                    <span className="text-neutral-600 italic">empty</span>
+                    <span className="text-muted-foreground/60 italic">
+                      empty
+                    </span>
                   )}
                 </p>
               </div>
@@ -76,10 +78,10 @@ export function DetailDialog({ row, onClose, appName }: DetailDialogProps) {
               row.finalText !== null &&
               row.finalText !== row.outputText && (
                 <div>
-                  <p className="mb-1.5 text-[10px] font-semibold tracking-widest text-neutral-600 uppercase">
+                  <p className="text-muted-foreground/60 mb-1.5 text-[10px] font-semibold tracking-widest uppercase">
                     Final (edited)
                   </p>
-                  <p className="leading-relaxed whitespace-pre-wrap text-neutral-300">
+                  <p className="text-foreground/80 leading-relaxed whitespace-pre-wrap">
                     {row.finalText}
                   </p>
                 </div>

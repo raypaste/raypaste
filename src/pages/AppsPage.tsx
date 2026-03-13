@@ -42,7 +42,7 @@ export function AppsPage() {
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <p className="text-sm text-neutral-500">Loading apps...</p>
+        <p className="text-muted-foreground text-sm">Loading apps...</p>
       </div>
     );
   }
@@ -51,15 +51,15 @@ export function AppsPage() {
     <div className="flex h-full flex-col gap-4 px-6 pb-6">
       {/* Search */}
       <div className="relative">
-        <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-neutral-500" />
+        <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search apps..."
           className={cn(
-            "w-full rounded-lg border border-white/10 bg-white/5 py-2 pr-3 pl-9 text-sm text-neutral-200",
-            "placeholder:text-neutral-600 focus:border-white/25 focus:outline-none",
+            "border-border bg-muted/30 text-foreground w-full rounded-lg border py-2 pr-3 pl-9 text-sm",
+            "placeholder:text-muted-foreground focus:border-ring focus:outline-none",
           )}
         />
       </div>
@@ -67,13 +67,13 @@ export function AppsPage() {
       {/* App list */}
       <div className="flex-1 overflow-auto">
         {filtered.length === 0 ? (
-          <p className="text-sm text-neutral-600">No apps found.</p>
+          <p className="text-muted-foreground text-sm">No apps found.</p>
         ) : (
           <div className="space-y-1">
             {filtered.map((app) => (
               <div
                 key={app.bundleId}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-white/4"
+                className="hover:bg-muted/40 flex items-center gap-3 rounded-lg px-3 py-2"
               >
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center">
                   {app.iconPath ? (
@@ -83,19 +83,17 @@ export function AppsPage() {
                       className="h-8 w-8 object-contain"
                     />
                   ) : (
-                    <div className="h-8 w-8 rounded-lg bg-white/10" />
+                    <div className="bg-muted/50 h-8 w-8 rounded-lg" />
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm text-neutral-200">
-                    {app.name}
-                  </p>
+                  <p className="text-foreground truncate text-sm">{app.name}</p>
                 </div>
                 <select
                   value={getAssignedPromptId(app.bundleId)}
                   onChange={(e) => handleAssign(app.bundleId, e.target.value)}
                   className={cn(
-                    "shrink-0 rounded-md border border-white/10 bg-neutral-900 px-2 py-1 text-xs text-neutral-300",
+                    "border-border bg-card text-muted-foreground shrink-0 rounded-md border px-2 py-1 text-xs",
                     "focus:outline-none",
                   )}
                 >

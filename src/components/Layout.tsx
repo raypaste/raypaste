@@ -52,9 +52,9 @@ export function Layout() {
         selectedPromptId={selectedPromptId}
         onNavigate={handleNavigate}
       />
-      <main className="flex flex-1 flex-col overflow-hidden bg-[#1a1a1a]">
+      <main className="bg-background flex flex-1 flex-col overflow-hidden">
         <div className="px-6 pt-[20px] pb-4">
-          <h1 className="text-base font-semibold text-white/80 capitalize">
+          <h1 className="text-foreground/80 text-base font-semibold capitalize">
             {getPageTitle(activePage, selectedPromptName)}
           </h1>
         </div>

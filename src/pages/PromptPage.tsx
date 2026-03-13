@@ -68,7 +68,7 @@ export function PromptPage({ promptId, onDeleted }: PromptPageProps) {
     <div className="flex h-full items-start justify-center overflow-auto px-6 py-12">
       <div className="w-full max-w-2xl space-y-6">
         <div className="space-y-2">
-          <label className="text-xs font-semibold tracking-wider text-neutral-400 uppercase">
+          <label className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
             Name
           </label>
           <input
@@ -79,17 +79,17 @@ export function PromptPage({ promptId, onDeleted }: PromptPageProps) {
               setDirty(true);
             }}
             className={cn(
-              "w-full rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-200 focus-within:border-neutral-500",
-              "placeholder:text-neutral-500 focus:outline-none",
+              "border-border bg-muted/30 text-foreground focus-within:border-ring w-full rounded-lg border px-3 py-2 text-sm",
+              "placeholder:text-muted-foreground focus:outline-none",
             )}
           />
         </div>
 
         <div className="space-y-2">
-          <p className="text-xs font-semibold tracking-wider text-neutral-400 uppercase">
+          <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
             Prompt
           </p>
-          <div className="rounded-lg border border-white/10 bg-white/5">
+          <div className="border-border bg-muted/30 focus-within:border-ring rounded-lg border">
             <textarea
               value={text}
               onChange={(e) => {
@@ -98,12 +98,12 @@ export function PromptPage({ promptId, onDeleted }: PromptPageProps) {
               }}
               rows={6}
               className={cn(
-                "w-full resize-none bg-transparent px-3 py-3 text-sm text-neutral-200",
-                "placeholder:text-neutral-600 focus:outline-none",
+                "text-foreground w-full resize-none bg-transparent px-3 py-3 text-sm",
+                "placeholder:text-muted-foreground focus:outline-none",
               )}
             />
-            <div className="border-t border-white/8 px-3 py-2">
-              <p className="text-xs text-neutral-500">
+            <div className="border-border border-t px-3 py-2">
+              <p className="text-muted-foreground text-xs">
                 Required — this is sent to the LLM as the system prompt.
               </p>
             </div>
@@ -111,10 +111,10 @@ export function PromptPage({ promptId, onDeleted }: PromptPageProps) {
         </div>
 
         <div className="space-y-2">
-          <p className="text-xs font-semibold tracking-wider text-neutral-400 uppercase">
+          <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
             Notes
           </p>
-          <div className="rounded-lg border border-white/10 bg-white/5">
+          <div className="border-border bg-muted/30 focus-within:border-ring rounded-lg border">
             <textarea
               value={notes}
               onChange={(e) => {
@@ -124,13 +124,13 @@ export function PromptPage({ promptId, onDeleted }: PromptPageProps) {
               placeholder="Optional notes for yourself..."
               rows={3}
               className={cn(
-                "w-full resize-none bg-transparent px-3 py-3 text-sm text-neutral-200",
-                "placeholder:text-neutral-600 focus:outline-none",
+                "text-foreground w-full resize-none bg-transparent px-3 py-3 text-sm",
+                "placeholder:text-muted-foreground focus:outline-none",
               )}
             />
-            <div className="flex items-center gap-1.5 border-t border-white/8 px-3 py-2">
-              <Lock className="h-3 w-3 text-neutral-600" />
-              <p className="text-xs text-neutral-500">
+            <div className="border-border flex items-center gap-1.5 border-t px-3 py-2">
+              <Lock className="text-muted-foreground/60 h-3 w-3" />
+              <p className="text-muted-foreground text-xs">
                 Private — never sent to the LLM.
               </p>
             </div>
@@ -144,8 +144,8 @@ export function PromptPage({ promptId, onDeleted }: PromptPageProps) {
             className={cn(
               "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
               name.trim() && text.trim()
-                ? "bg-neutral-200 text-neutral-900 hover:bg-white"
-                : "cursor-not-allowed bg-white/8 text-neutral-600",
+                ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                : "bg-muted/40 text-muted-foreground cursor-not-allowed",
             )}
           >
             Save changes
@@ -154,13 +154,13 @@ export function PromptPage({ promptId, onDeleted }: PromptPageProps) {
 
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold tracking-wider text-neutral-400 uppercase">
+            <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
               Apps using this prompt
             </p>
             <div className="relative">
               <button
                 onClick={() => setShowAddApp((v) => !v)}
-                className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-neutral-300 transition-colors hover:bg-white/10 hover:text-white"
+                className="border-border bg-muted/30 text-muted-foreground hover:bg-muted/50 hover:text-foreground flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors"
               >
                 <Plus className="h-3 w-3" />
                 Add App
@@ -171,9 +171,9 @@ export function PromptPage({ promptId, onDeleted }: PromptPageProps) {
                     className="fixed inset-0 z-40"
                     onClick={() => setShowAddApp(false)}
                   />
-                  <div className="absolute top-full right-0 z-50 mt-1 max-h-52 w-60 overflow-auto rounded-lg border border-white/10 bg-neutral-900 shadow-xl">
+                  <div className="border-border bg-popover absolute top-full right-0 z-50 mt-1 max-h-52 w-60 overflow-auto rounded-lg border shadow-xl">
                     {availableApps.length === 0 ? (
-                      <p className="px-2 py-1 text-xs text-neutral-500">
+                      <p className="text-muted-foreground px-2 py-1 text-xs">
                         {apps.length === 0
                           ? "No apps loaded yet."
                           : "All apps already assigned."}
@@ -186,9 +186,9 @@ export function PromptPage({ promptId, onDeleted }: PromptPageProps) {
                             assignAppToPrompt(promptId, app.bundleId);
                             setShowAddApp(false);
                           }}
-                          className="flex w-full flex-col px-2 py-1 text-left transition-colors hover:bg-white/8"
+                          className="hover:bg-muted/50 flex w-full flex-col px-2 py-1 text-left transition-colors"
                         >
-                          <span className="text-xs font-medium text-neutral-200">
+                          <span className="text-foreground text-xs font-medium">
                             {app.name}
                           </span>
                         </button>
@@ -200,9 +200,9 @@ export function PromptPage({ promptId, onDeleted }: PromptPageProps) {
             </div>
           </div>
 
-          <div className="rounded-lg border border-white/8 bg-white/3 p-3">
+          <div className="border-border bg-muted/20 rounded-lg border p-3">
             {assignedApps.length === 0 ? (
-              <p className="text-sm text-neutral-500">
+              <p className="text-muted-foreground text-sm">
                 No apps assigned — click Add App to link one.
               </p>
             ) : (
@@ -210,14 +210,14 @@ export function PromptPage({ promptId, onDeleted }: PromptPageProps) {
                 {assignedApps.map((app) => (
                   <div
                     key={app.bundleId}
-                    className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-white/5"
+                    className="hover:bg-muted/30 flex items-center gap-2 rounded-md px-2 py-1.5"
                   >
-                    <span className="flex-1 text-sm text-neutral-200">
+                    <span className="text-foreground flex-1 text-sm">
                       {app.name}
                     </span>
                     <button
                       onClick={() => unassignApp(app.bundleId)}
-                      className="text-neutral-600 transition-colors hover:text-red-400"
+                      className="text-muted-foreground/60 transition-colors hover:text-red-400"
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>
@@ -232,25 +232,25 @@ export function PromptPage({ promptId, onDeleted }: PromptPageProps) {
           <button
             onClick={() => setDefaultPrompt(isDefault ? null : promptId)}
             className={cn(
-              "flex items-center gap-1 rounded-lg border p-2 text-xs font-medium transition-colors",
+              "flex items-center gap-1 rounded-lg border px-2 py-1.5 text-xs font-medium",
               isDefault
-                ? "border-green-800/50 bg-green-900/40 text-green-400"
-                : "border-white/10 bg-white/5 text-neutral-300 hover:bg-white/10 hover:text-white",
+                ? "border-primary/60 bg-primary/20 text-primary"
+                : "border-border bg-muted/30 text-muted-foreground hover:bg-muted/50 hover:text-foreground",
             )}
           >
-            <Star className={cn("h-4 w-4", isDefault && "fill-green-400")} />
+            <Star className={cn("h-3 w-3", isDefault && "fill-primary")} />
             {isDefault ? "Default Prompt" : "Set as Default Prompt"}
           </button>
         </div>
 
-        <div className="border-t border-white/6 pt-4">
+        <div className="border-border border-t pt-4">
           <button
             onClick={handleDelete}
             className={cn(
-              "flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+              "flex cursor-pointer items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium",
               confirmDelete
-                ? "border border-red-800/40 bg-red-900/30 text-red-400"
-                : "text-neutral-600 hover:text-red-400",
+                ? "border-destructive/60 bg-destructive/20 text-destructive border"
+                : "text-muted-foreground/60 hover:text-red-400",
             )}
           >
             <Trash2 className="h-3.5 w-3.5" />
