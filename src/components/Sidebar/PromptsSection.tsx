@@ -1,5 +1,4 @@
-import { useState, useEffect } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { useState } from "react";
 import { ChevronRight, Star } from "lucide-react";
 import {
   Collapsible,
@@ -8,8 +7,8 @@ import {
 } from "#/components/ui/collapsible";
 import { cn } from "#/lib/utils";
 import { usePromptsStore, useAppsStore } from "#/stores";
-import type { InstalledApp } from "#/stores";
 import type { Page } from "./SidebarNav";
+import { useAppIcons } from "#/hooks/useAppIcons";
 
 interface PromptsSectionProps {
   selectedPromptId: string | null;
@@ -33,48 +32,7 @@ export function PromptsSection({
     })
     .filter((g) => g.prompts.length > 0);
 
-  const [iconSrcByBundleId, setIconSrcByBundleId] = useState<
-    Record<string, string>
-  >({});
-
-  useEffect(() => {
-    const appsNeedingIcons = appGroups
-      .map((g) => g.app)
-      .filter(
-        (app): app is InstalledApp & { iconPath: string } =>
-          !!app.iconPath && !iconSrcByBundleId[app.bundleId],
-      );
-
-    if (appsNeedingIcons.length === 0) return;
-
-    let cancelled = false;
-
-    Promise.all(
-      appsNeedingIcons.map(async (app) => {
-        const src = await invoke<string | null>("get_icon_base64", {
-          request: { path: app.iconPath },
-        });
-        return src ? ([app.bundleId, src] as [string, string]) : null;
-      }),
-    )
-      .then((results) => {
-        if (cancelled) return;
-        const entries = results.filter(
-          (e): e is [string, string] => e !== null,
-        );
-        if (entries.length === 0) return;
-        setIconSrcByBundleId((prev) => ({
-          ...prev,
-          ...Object.fromEntries(entries),
-        }));
-      })
-      .catch(() => {});
-
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appGroups.map((g) => g.app.bundleId).join(",")]);
+  const iconSrcByBundleId = useAppIcons(appGroups.map((g) => g.app));
 
   const [openGroups, setOpenGroups] = useState<Set<string> | null>(null);
   const resolvedOpenGroups =

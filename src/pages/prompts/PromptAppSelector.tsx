@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useAppsStore } from "#/stores";
 import type { InstalledApp } from "#/stores";
+import { useAppIcons } from "#/hooks/useAppIcons";
 import {
   Combobox,
   ComboboxChips,
@@ -42,41 +43,7 @@ export function PromptAppSelector({
       .catch(() => {});
   }, [apps.length, setApps]);
 
-  const [iconSrcByBundleId, setIconSrcByBundleId] = useState<
-    Record<string, string>
-  >({});
-
-  useEffect(() => {
-    const appsWithMissingIcons = apps.filter(
-      (app) => app.iconPath && !iconSrcByBundleId[app.bundleId],
-    );
-    if (appsWithMissingIcons.length === 0) return;
-
-    let cancelled = false;
-    Promise.all(
-      appsWithMissingIcons.map(async (app) => {
-        const src = await invoke<string | null>("get_icon_base64", {
-          request: { path: app.iconPath },
-        });
-        return src ? [app.bundleId, src] : null;
-      }),
-    )
-      .then((results) => {
-        if (cancelled) return;
-        const nextEntries = results.filter(
-          (entry): entry is [string, string] => entry !== null,
-        );
-        if (nextEntries.length === 0) return;
-        setIconSrcByBundleId((current) => ({
-          ...current,
-          ...Object.fromEntries(nextEntries),
-        }));
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [apps, iconSrcByBundleId]);
+  const iconSrcByBundleId = useAppIcons(apps);
 
   const anchor = useComboboxAnchor();
 

@@ -5,15 +5,14 @@ import { cn } from "#/lib/utils";
 import { useAppsStore, usePromptsStore } from "#/stores";
 import type { InstalledApp } from "#/stores";
 import { AppPromptCombobox } from "#/pages/apps/AppPromptCombobox";
+import { useAppIcons } from "#/hooks/useAppIcons";
 
 export function AppsPage() {
   const { apps, setApps } = useAppsStore();
   const { prompts, assignAppToPrompt, unassignApp } = usePromptsStore();
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(apps.length === 0);
-  const [iconSrcByBundleId, setIconSrcByBundleId] = useState<
-    Record<string, string>
-  >({});
+  const iconSrcByBundleId = useAppIcons(apps);
 
   useEffect(() => {
     if (apps.length > 0) return;
@@ -24,47 +23,6 @@ export function AppsPage() {
       })
       .catch(() => setLoading(false));
   }, [apps.length, setApps]);
-
-  useEffect(() => {
-    const appsWithMissingIcons = apps.filter(
-      (app) => app.iconPath && !iconSrcByBundleId[app.bundleId],
-    );
-
-    if (appsWithMissingIcons.length === 0) return;
-
-    let cancelled = false;
-
-    Promise.all(
-      appsWithMissingIcons.map(async (app) => {
-        const src = await invoke<string | null>("get_icon_base64", {
-          request: { path: app.iconPath },
-        });
-
-        return src ? [app.bundleId, src] : null;
-      }),
-    )
-      .then((results) => {
-        if (cancelled) return;
-
-        const nextEntries = results.filter(
-          (entry): entry is [string, string] => entry !== null,
-        );
-
-        if (nextEntries.length === 0) return;
-
-        setIconSrcByBundleId((current) => ({
-          ...current,
-          ...Object.fromEntries(nextEntries),
-        }));
-      })
-      .catch(() => {
-        // Keep the fallback placeholder if icon loading fails.
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [apps, iconSrcByBundleId]);
 
   const filtered = apps.filter(
     (app) =>
