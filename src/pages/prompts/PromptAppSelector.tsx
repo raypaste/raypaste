@@ -15,6 +15,14 @@ import {
   useComboboxAnchor,
 } from "#/components/ui/combobox";
 
+function AppIcon({ src }: { src: string | undefined }) {
+  return src ? (
+    <img src={src} alt="" className="h-5 w-5 object-contain" />
+  ) : (
+    <div className="bg-muted/50 h-5 w-5 rounded" />
+  );
+}
+
 interface PromptAppSelectorProps {
   assignedAppIds: string[];
   onChange: (newIds: string[]) => void;
@@ -33,6 +41,42 @@ export function PromptAppSelector({
       .then(setApps)
       .catch(() => {});
   }, [apps.length, setApps]);
+
+  const [iconSrcByBundleId, setIconSrcByBundleId] = useState<
+    Record<string, string>
+  >({});
+
+  useEffect(() => {
+    const appsWithMissingIcons = apps.filter(
+      (app) => app.iconPath && !iconSrcByBundleId[app.bundleId],
+    );
+    if (appsWithMissingIcons.length === 0) return;
+
+    let cancelled = false;
+    Promise.all(
+      appsWithMissingIcons.map(async (app) => {
+        const src = await invoke<string | null>("get_icon_base64", {
+          request: { path: app.iconPath },
+        });
+        return src ? [app.bundleId, src] : null;
+      }),
+    )
+      .then((results) => {
+        if (cancelled) return;
+        const nextEntries = results.filter(
+          (entry): entry is [string, string] => entry !== null,
+        );
+        if (nextEntries.length === 0) return;
+        setIconSrcByBundleId((current) => ({
+          ...current,
+          ...Object.fromEntries(nextEntries),
+        }));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [apps, iconSrcByBundleId]);
 
   const anchor = useComboboxAnchor();
 
@@ -61,7 +105,11 @@ export function PromptAppSelector({
           className="border-border bg-muted/30 focus-within:border-ring min-h-10 rounded-lg"
         >
           {assignedApps.map((app) => (
-            <ComboboxChip key={app.bundleId} className="p-1">
+            <ComboboxChip
+              key={app.bundleId}
+              className="flex items-center gap-1.5 p-1"
+            >
+              <AppIcon src={iconSrcByBundleId[app.bundleId]} />
               {app.name}
             </ComboboxChip>
           ))}
@@ -77,8 +125,9 @@ export function PromptAppSelector({
               <ComboboxItem
                 key={app.bundleId}
                 value={app.bundleId}
-                className="py-2 pl-3"
+                className="flex items-center gap-2 py-2 pl-3"
               >
+                <AppIcon src={iconSrcByBundleId[app.bundleId]} />
                 {app.name}
               </ComboboxItem>
             ))}

@@ -107,7 +107,8 @@ fn get_icon_cache_dir() -> std::path::PathBuf {
 }
 
 /// Convert an .icns file to a PNG cached in the app's cache directory.
-/// Uses macOS's built-in `sips` tool — no extra dependencies.
+/// Tries `sips` first; falls back to `iconutil` for Electron-style ICNS files
+/// that `sips` cannot handle (e.g. Slack, VS Code).
 /// The output path is deterministic (hash of the input path) so it acts as a
 /// persistent cache across app restarts.
 fn icns_to_png_path(icns_path: &str) -> Option<String> {
@@ -129,20 +130,25 @@ fn icns_to_png_path(icns_path: &str) -> Option<String> {
         .as_nanos();
     let temp_path = cache_dir.join(format!("icon_{:x}_{}.png", hash, timestamp));
 
-    let status = std::process::Command::new("sips")
+    let sips_ok = std::process::Command::new("sips")
         .args([
             "-s", "format", "png",
             "--resampleHeightWidth", "64", "64",
             icns_path,
             "--out", temp_path.to_str()?,
         ])
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
         .status()
-        .ok()?;
+        .map(|s| s.success())
+        .unwrap_or(false);
 
-    if !status.success() {
-        // Clean up temp file on failure
+    if !sips_ok || !temp_path.exists() {
         let _ = std::fs::remove_file(&temp_path);
-        return None;
+        // Fallback: extract via iconutil (handles Electron/modern ICNS formats)
+        if !icns_to_png_via_iconutil(icns_path, &temp_path, hash, &cache_dir) {
+            return None;
+        }
     }
 
     if !temp_path.exists() {
@@ -154,7 +160,6 @@ fn icns_to_png_path(icns_path: &str) -> Option<String> {
     match std::fs::rename(&temp_path, &final_path) {
         Ok(()) => Some(final_path.to_string_lossy().into_owned()),
         Err(_) => {
-            // Final file likely already exists from another process
             let _ = std::fs::remove_file(&temp_path);
             if final_path.exists() {
                 Some(final_path.to_string_lossy().into_owned())
@@ -163,6 +168,56 @@ fn icns_to_png_path(icns_path: &str) -> Option<String> {
             }
         }
     }
+}
+
+/// Fallback icon conversion using `iconutil`.
+/// Expands the ICNS into an iconset directory, picks the best available PNG,
+/// copies it to `output_path`, then cleans up the iconset.
+fn icns_to_png_via_iconutil(
+    icns_path: &str,
+    output_path: &std::path::Path,
+    hash: u64,
+    cache_dir: &std::path::Path,
+) -> bool {
+    let iconset_dir = cache_dir.join(format!("icon_{:x}.iconset", hash));
+    let _ = std::fs::remove_dir_all(&iconset_dir);
+
+    let ok = std::process::Command::new("iconutil")
+        .args(["-c", "iconset", icns_path, "-o", &iconset_dir.to_string_lossy()])
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .status()
+        .map(|s| s.success())
+        .unwrap_or(false);
+
+    if !ok {
+        let _ = std::fs::remove_dir_all(&iconset_dir);
+        return false;
+    }
+
+    // Pick the best-sized PNG from the iconset (prefer 64×64 or equivalent)
+    let candidates = [
+        "icon_64x64.png",
+        "icon_32x32@2x.png",
+        "icon_128x128.png",
+        "icon_16x16@2x.png",
+        "icon_256x256.png",
+        "icon_512x512.png",
+    ];
+
+    let mut copied = false;
+    for name in &candidates {
+        let src = iconset_dir.join(name);
+        if src.exists() {
+            if std::fs::copy(&src, output_path).is_ok() {
+                copied = true;
+                break;
+            }
+        }
+    }
+
+    let _ = std::fs::remove_dir_all(&iconset_dir);
+    copied
 }
 
 /// Read an icon file and return it as a base64 data URL for display in the frontend.
