@@ -7,7 +7,7 @@ import type { Page } from "#/components/Sidebar/SidebarNav";
 import { NewPromptPage } from "#/pages/prompts/NewPromptPage";
 import { PromptPage } from "#/pages/prompts/PromptPage";
 import { AppsPage } from "#/pages/AppsPage";
-import { HistoryPage } from "#/pages/HistoryPage";
+import { HistoryPage } from "#/pages/history/HistoryPage";
 import { SettingsPage } from "#/pages/SettingsPage";
 import { usePromptsStore, useAppsStore } from "#/stores";
 import type { InstalledApp } from "#/stores";

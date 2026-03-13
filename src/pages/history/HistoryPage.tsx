@@ -22,14 +22,14 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
 } from "#/components/ui/alert-dialog";
-import { EntryCard } from "#/components/history/EntryCard";
-import { DetailDialog } from "#/components/history/DetailDialog";
-import { OverviewPanel } from "#/components/history/OverviewPanel";
+import { EntryCard } from "#/pages/history/EntryCard";
+import { DetailDialog } from "#/pages/history/DetailDialog";
+import { OverviewPanel } from "#/pages/history/OverviewPanel";
 import {
   DIALOG_CONTENT_CLS,
   DIALOG_CANCEL_CLS,
   DIALOG_ACTION_DESTRUCTIVE_CLS,
-} from "#/components/history/constants";
+} from "#/pages/history/constants";
 
 const LIST_LIMIT = 200;
 
