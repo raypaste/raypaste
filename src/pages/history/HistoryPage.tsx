@@ -123,14 +123,14 @@ export function HistoryPage() {
           <div className="relative">
             <Search
               size={14}
-              className="text-muted-foreground pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2"
+              className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2"
             />
             <Input
               type="text"
               value={search}
               onChange={(e) => handleSearchChange(e.target.value)}
               placeholder="Search history…"
-              className="bg-muted/40 text-[13px] h-9 pl-9 focus-visible:ring-0"
+              className="bg-muted/40 h-9 pl-9 text-[13px] focus-visible:ring-0"
             />
           </div>
         </div>

@@ -52,6 +52,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             commands::apps::list_apps,
+            commands::apps::get_icon_base64,
             commands::focused_app::get_focused_app,
             commands::text::get_selected_text,
             commands::text::write_text_back,

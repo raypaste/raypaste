@@ -6,6 +6,7 @@ version = 4
 name = "Raypaste"
 version = "0.2.1"
 dependencies = [
+ "base64 0.22.1",
  "core-graphics 0.23.2",
  "objc2 0.5.2",
  "objc2-app-kit 0.2.2",
