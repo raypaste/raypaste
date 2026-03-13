@@ -2,8 +2,16 @@ import { useState } from "react";
 import { Eye, EyeOff, Monitor, Moon, Sun } from "lucide-react";
 import { LLM_PROVIDER } from "#/services/llm/types";
 import { cn } from "#/lib/utils";
-import { useSettingsStore } from "#/stores";
+import { useSettingsStore, usePromptsStore } from "#/stores";
 import type { ThemeMode } from "#/stores/settingsStore";
+import {
+  Combobox,
+  ComboboxInput,
+  ComboboxContent,
+  ComboboxList,
+  ComboboxItem,
+  ComboboxEmpty,
+} from "#/components/ui/combobox";
 
 export function SettingsPage() {
   const {
@@ -18,11 +26,36 @@ export function SettingsPage() {
     setProvider,
     setOpenrouterApiKey,
     setCerebrasApiKey,
+    setModel,
     setReviewMode,
     setThemeMode,
   } = useSettingsStore();
 
+  const modelOptions = [
+    { value: "openai/gpt-oss-120b", label: "GPT OSS 120B" },
+    {
+      value: "meta-llama/llama-3.1-8b-instruct",
+      label: "Llama 3.1 8B Instruct",
+    },
+  ];
+
+  const { prompts, defaultPromptId, setDefaultPrompt } = usePromptsStore();
+
   const [showKey, setShowKey] = useState(false);
+  const [promptQuery, setPromptQuery] = useState("");
+  const [modelQuery, setModelQuery] = useState("");
+
+  const filteredPrompts = promptQuery
+    ? prompts.filter((p) =>
+        p.name.toLowerCase().includes(promptQuery.toLowerCase()),
+      )
+    : prompts;
+
+  const filteredModelOptions = modelQuery
+    ? modelOptions.filter((m) =>
+        m.label.toLowerCase().includes(modelQuery.toLowerCase()),
+      )
+    : modelOptions;
 
   const currentKey =
     provider === LLM_PROVIDER.Cerebras ? cerebrasApiKey : openrouterApiKey;
@@ -42,7 +75,7 @@ export function SettingsPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-lg space-y-8 px-6 py-4">
+    <div className="mx-auto max-w-lg space-y-8 px-6 py-4 pb-12">
       {/* Appearance */}
       <section className="space-y-3">
         <h2 className="text-foreground text-sm font-semibold">Appearance</h2>
@@ -77,7 +110,7 @@ export function SettingsPage() {
             className={cn(
               "rounded-lg border p-4 text-left transition-colors",
               mode === "direct"
-                ? "border-primary/50 bg-secondary text-foreground"
+                ? "border-primary bg-primary/10 text-foreground"
                 : "border-border bg-muted/40 text-muted-foreground hover:border-border/80",
             )}
           >
@@ -114,10 +147,10 @@ export function SettingsPage() {
                 key={p}
                 onClick={() => setProvider(p)}
                 className={cn(
-                  "rounded-md border px-4 py-2 text-sm capitalize transition-colors",
+                  "cursor-pointer rounded-md border px-4 py-2 text-sm capitalize transition-colors",
                   provider === p
-                    ? "border-primary/50 bg-secondary text-foreground"
-                    : "border-border text-muted-foreground hover:border-border/80 hover:text-foreground",
+                    ? "border-primary bg-primary/10 text-foreground"
+                    : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground",
                 )}
               >
                 {p === LLM_PROVIDER.OpenRouter ? "OpenRouter" : "Cerebras"}
@@ -129,8 +162,8 @@ export function SettingsPage() {
 
       {/* API Key */}
       {mode === "direct" && (
-        <section className="space-y-3">
-          <h2 className="text-foreground text-sm font-semibold">
+        <section className="space-y-2">
+          <h2 className="text-foreground text-xs font-medium">
             {provider === LLM_PROVIDER.OpenRouter ? "OpenRouter" : "Cerebras"}{" "}
             API Key
           </h2>
@@ -141,7 +174,7 @@ export function SettingsPage() {
               onChange={(e) => setCurrentKey(e.target.value)}
               placeholder="sk-..."
               className={cn(
-                "border-border bg-muted/30 text-foreground flex-1 rounded-lg border px-3 py-2 text-sm",
+                "border-border bg-muted/30 text-foreground flex-1 rounded-lg border px-3 py-2 text-xs",
                 "placeholder:text-muted-foreground focus:border-ring focus:outline-none",
               )}
             />
@@ -168,10 +201,10 @@ export function SettingsPage() {
           <button
             onClick={() => setReviewMode(false)}
             className={cn(
-              "rounded-lg border p-4 text-left transition-colors",
+              "cursor-pointer rounded-lg border p-4 text-left transition-colors",
               !reviewMode
-                ? "border-primary/50 bg-secondary text-foreground"
-                : "border-border bg-muted/40 text-muted-foreground hover:border-border/80",
+                ? "border-primary bg-primary/10 text-foreground"
+                : "border-border bg-muted/40 text-muted-foreground hover:border-primary/50 hover:text-foreground",
             )}
           >
             <p className="text-sm font-medium">Instant</p>
@@ -182,10 +215,10 @@ export function SettingsPage() {
           <button
             onClick={() => setReviewMode(true)}
             className={cn(
-              "rounded-lg border p-4 text-left transition-colors",
+              "cursor-pointer rounded-lg border p-4 text-left transition-colors",
               reviewMode
-                ? "border-primary/50 bg-secondary text-foreground"
-                : "border-border bg-muted/40 text-muted-foreground hover:border-border/80",
+                ? "border-primary bg-primary/10 text-foreground"
+                : "border-border bg-muted/40 text-muted-foreground hover:border-primary/50 hover:text-foreground",
             )}
           >
             <p className="text-sm font-medium">Review</p>
@@ -196,20 +229,75 @@ export function SettingsPage() {
         </div>
       </section>
 
+      {/* Default Prompt */}
+      <section className="space-y-3">
+        <h2 className="text-foreground text-sm font-semibold">
+          Default Prompt
+        </h2>
+        <Combobox
+          value={prompts.find((p) => p.id === defaultPromptId)?.name ?? ""}
+          onValueChange={(name) =>
+            setDefaultPrompt(prompts.find((p) => p.name === name)?.id ?? null)
+          }
+          onInputValueChange={(val) => setPromptQuery(val)}
+        >
+          <ComboboxInput
+            placeholder="Select a default prompt..."
+            showTrigger
+            showClear={!!defaultPromptId}
+            className="w-full"
+          />
+          <ComboboxContent>
+            {filteredPrompts.length === 0 && (
+              <ComboboxEmpty>No prompts found</ComboboxEmpty>
+            )}
+            <ComboboxList>
+              {filteredPrompts.map((p) => (
+                <ComboboxItem key={p.id} value={p.name} className="py-2 pl-3">
+                  {p.name}
+                </ComboboxItem>
+              ))}
+            </ComboboxList>
+          </ComboboxContent>
+        </Combobox>
+        <p className="text-muted-foreground text-xs">
+          Used when no app-specific prompt is assigned
+        </p>
+      </section>
+
       {/* Model */}
       <section className="space-y-3">
         <h2 className="text-foreground text-sm font-semibold">Model</h2>
-        <select
-          disabled
-          value={model}
-          className={cn(
-            "border-border bg-muted/30 w-full cursor-not-allowed rounded-lg border px-3 py-2",
-            "text-muted-foreground text-sm focus:outline-none",
-          )}
+        <Combobox
+          value={modelOptions.find((m) => m.value === model)?.label ?? model}
+          onValueChange={(label) => {
+            if (label)
+              setModel(
+                modelOptions.find((m) => m.label === label)?.value ?? label,
+              );
+          }}
+          onInputValueChange={(val) => setModelQuery(val)}
         >
-          <option value={model}>{model}</option>
-        </select>
-        <p className="text-muted-foreground text-xs">More models coming soon</p>
+          <ComboboxInput
+            placeholder="Select a model..."
+            showTrigger
+            className="w-full"
+          />
+          <ComboboxContent>
+            <ComboboxEmpty>No models found</ComboboxEmpty>
+            <ComboboxList>
+              {filteredModelOptions.map((m) => (
+                <ComboboxItem
+                  key={m.value}
+                  value={m.label}
+                  className="py-2 pl-3"
+                >
+                  {m.label}
+                </ComboboxItem>
+              ))}
+            </ComboboxList>
+          </ComboboxContent>
+        </Combobox>
       </section>
     </div>
   );

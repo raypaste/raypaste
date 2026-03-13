@@ -16,6 +16,7 @@ interface SettingsState {
   setProvider: (provider: LLMProvider) => void;
   setOpenrouterApiKey: (key: string) => void;
   setCerebrasApiKey: (key: string) => void;
+  setModel: (model: string) => void;
   setReviewMode: (reviewMode: boolean) => void;
   setThemeMode: (themeMode: ThemeMode) => void;
 }
@@ -34,6 +35,7 @@ export const useSettingsStore = create<SettingsState>()(
       setProvider: (provider) => set({ provider }),
       setOpenrouterApiKey: (openrouterApiKey) => set({ openrouterApiKey }),
       setCerebrasApiKey: (cerebrasApiKey) => set({ cerebrasApiKey }),
+      setModel: (model) => set({ model }),
       setReviewMode: (reviewMode) => set({ reviewMode }),
       setThemeMode: (themeMode) => set({ themeMode }),
     }),

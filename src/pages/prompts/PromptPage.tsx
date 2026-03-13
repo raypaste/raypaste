@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react";
-import { Star, Plus, X, Trash2, Lock } from "lucide-react";
-import { invoke } from "@tauri-apps/api/core";
+import { useState } from "react";
+import { Star, Trash2, Lock } from "lucide-react";
 import { cn } from "#/lib/utils";
-import { usePromptsStore, useAppsStore } from "#/stores";
-import type { InstalledApp } from "#/stores";
+import { usePromptsStore } from "#/stores";
+import { PromptAppSelector } from "#/pages/prompts/PromptAppSelector";
 
 interface PromptPageProps {
   promptId: string;
@@ -20,29 +19,17 @@ export function PromptPage({ promptId, onDeleted }: PromptPageProps) {
     defaultPromptId,
     setDefaultPrompt,
   } = usePromptsStore();
-  const { apps, setApps } = useAppsStore();
-
   const prompt = prompts.find((p) => p.id === promptId);
 
   const [name, setName] = useState(prompt?.name ?? "");
   const [text, setText] = useState(prompt?.text ?? "");
   const [notes, setNotes] = useState(prompt?.notes ?? "");
   const [dirty, setDirty] = useState(false);
-  const [showAddApp, setShowAddApp] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-
-  useEffect(() => {
-    if (apps.length > 0) return;
-    invoke<InstalledApp[]>("list_apps")
-      .then(setApps)
-      .catch(() => {});
-  }, [apps.length, setApps]);
 
   if (!prompt) return null;
 
   const isDefault = defaultPromptId === promptId;
-  const assignedApps = apps.filter((a) => prompt.appIds.includes(a.bundleId));
-  const availableApps = apps.filter((a) => !prompt.appIds.includes(a.bundleId));
 
   function handleSave() {
     if (!name.trim() || !text.trim()) return;
@@ -65,7 +52,7 @@ export function PromptPage({ promptId, onDeleted }: PromptPageProps) {
   }
 
   return (
-    <div className="flex h-full items-start justify-center overflow-auto px-6 py-12">
+    <div className="flex h-full items-start justify-center overflow-auto px-6 py-12 pb-20">
       <div className="w-full max-w-2xl space-y-6">
         <div className="space-y-2">
           <label className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
@@ -152,81 +139,15 @@ export function PromptPage({ promptId, onDeleted }: PromptPageProps) {
           </button>
         )}
 
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
-              Apps using this prompt
-            </p>
-            <div className="relative">
-              <button
-                onClick={() => setShowAddApp((v) => !v)}
-                className="border-border bg-muted/30 text-muted-foreground hover:bg-muted/50 hover:text-foreground flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors"
-              >
-                <Plus className="h-3 w-3" />
-                Add App
-              </button>
-              {showAddApp && (
-                <>
-                  <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setShowAddApp(false)}
-                  />
-                  <div className="border-border bg-popover absolute top-full right-0 z-50 mt-1 max-h-52 w-60 overflow-auto rounded-lg border shadow-xl">
-                    {availableApps.length === 0 ? (
-                      <p className="text-muted-foreground px-2 py-1 text-xs">
-                        {apps.length === 0
-                          ? "No apps loaded yet."
-                          : "All apps already assigned."}
-                      </p>
-                    ) : (
-                      availableApps.map((app) => (
-                        <button
-                          key={app.bundleId}
-                          onClick={() => {
-                            assignAppToPrompt(promptId, app.bundleId);
-                            setShowAddApp(false);
-                          }}
-                          className="hover:bg-muted/50 flex w-full flex-col px-2 py-1 text-left transition-colors"
-                        >
-                          <span className="text-foreground text-xs font-medium">
-                            {app.name}
-                          </span>
-                        </button>
-                      ))
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-
-          <div className="border-border bg-muted/20 rounded-lg border p-3">
-            {assignedApps.length === 0 ? (
-              <p className="text-muted-foreground text-sm">
-                No apps assigned — click Add App to link one.
-              </p>
-            ) : (
-              <div className="space-y-0.5">
-                {assignedApps.map((app) => (
-                  <div
-                    key={app.bundleId}
-                    className="hover:bg-muted/30 flex items-center gap-2 rounded-md px-2 py-1.5"
-                  >
-                    <span className="text-foreground flex-1 text-sm">
-                      {app.name}
-                    </span>
-                    <button
-                      onClick={() => unassignApp(app.bundleId)}
-                      className="text-muted-foreground/60 transition-colors hover:text-red-400"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+        <PromptAppSelector
+          assignedAppIds={prompt.appIds}
+          onChange={(newIds) => {
+            const added = newIds.filter((id) => !prompt.appIds.includes(id));
+            const removed = prompt.appIds.filter((id) => !newIds.includes(id));
+            added.forEach((id) => assignAppToPrompt(promptId, id));
+            removed.forEach((id) => unassignApp(id));
+          }}
+        />
 
         <div>
           <button

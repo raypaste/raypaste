@@ -2,16 +2,18 @@ import { useState } from "react";
 import { Lock } from "lucide-react";
 import { cn } from "#/lib/utils";
 import { usePromptsStore } from "#/stores";
+import { PromptAppSelector } from "#/pages/prompts/PromptAppSelector";
 
 interface NewPromptPageProps {
   onCreated: (id: string) => void;
 }
 
 export function NewPromptPage({ onCreated }: NewPromptPageProps) {
-  const { addPrompt } = usePromptsStore();
+  const { addPrompt, assignAppToPrompt } = usePromptsStore();
   const [name, setName] = useState("");
   const [text, setText] = useState("");
   const [notes, setNotes] = useState("");
+  const [selectedAppIds, setSelectedAppIds] = useState<string[]>([]);
 
   function handleSave() {
     if (!name.trim() || !text.trim()) return;
@@ -22,6 +24,9 @@ export function NewPromptPage({ onCreated }: NewPromptPageProps) {
       text: text.trim(),
       notes: notes.trim(),
     });
+    for (const appId of selectedAppIds) {
+      assignAppToPrompt(id, appId);
+    }
     onCreated(id);
   }
 
@@ -93,6 +98,11 @@ export function NewPromptPage({ onCreated }: NewPromptPageProps) {
             </div>
           </div>
         </div>
+
+        <PromptAppSelector
+          assignedAppIds={selectedAppIds}
+          onChange={setSelectedAppIds}
+        />
 
         <button
           onClick={handleSave}
