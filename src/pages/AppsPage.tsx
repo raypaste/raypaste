@@ -3,7 +3,63 @@ import { invoke } from "@tauri-apps/api/core";
 import { Search } from "lucide-react";
 import { cn } from "#/lib/utils";
 import { useAppsStore, usePromptsStore } from "#/stores";
-import type { InstalledApp } from "#/stores";
+import type { InstalledApp, Prompt } from "#/stores";
+import {
+  Combobox,
+  ComboboxInput,
+  ComboboxContent,
+  ComboboxList,
+  ComboboxItem,
+  ComboboxEmpty,
+} from "#/components/ui/combobox";
+
+function AppPromptCombobox({
+  prompts,
+  assignedPromptId,
+  onAssign,
+}: {
+  prompts: Prompt[];
+  assignedPromptId: string;
+  onAssign: (promptId: string) => void;
+}) {
+  const [query, setQuery] = useState("");
+
+  const filtered = query
+    ? prompts.filter((p) => p.name.toLowerCase().includes(query.toLowerCase()))
+    : prompts;
+
+  const selectedName =
+    prompts.find((p) => p.id === assignedPromptId)?.name ?? "";
+
+  return (
+    <Combobox
+      value={selectedName}
+      onValueChange={(name) => {
+        onAssign(prompts.find((p) => p.name === name)?.id ?? "");
+      }}
+      onInputValueChange={setQuery}
+    >
+      <ComboboxInput
+        placeholder="No prompt"
+        showTrigger
+        showClear={!!assignedPromptId}
+        className="min-w-40 max-w-64"
+      />
+      <ComboboxContent className="min-w-56">
+        {filtered.length === 0 && (
+          <ComboboxEmpty>No prompts found</ComboboxEmpty>
+        )}
+        <ComboboxList>
+          {filtered.map((p) => (
+            <ComboboxItem key={p.id} value={p.name} className="py-2 pl-3">
+              {p.name}
+            </ComboboxItem>
+          ))}
+        </ComboboxList>
+      </ComboboxContent>
+    </Combobox>
+  );
+}
 
 export function AppsPage() {
   const { apps, setApps } = useAppsStore();
@@ -133,21 +189,11 @@ export function AppsPage() {
                 <div className="min-w-0 flex-1">
                   <p className="text-foreground truncate text-sm">{app.name}</p>
                 </div>
-                <select
-                  value={getAssignedPromptId(app.bundleId)}
-                  onChange={(e) => handleAssign(app.bundleId, e.target.value)}
-                  className={cn(
-                    "border-border bg-card text-muted-foreground shrink-0 rounded-md border px-2 py-1 text-xs",
-                    "focus:outline-none",
-                  )}
-                >
-                  <option value="">No prompt</option>
-                  {prompts.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
+                <AppPromptCombobox
+                  prompts={prompts}
+                  assignedPromptId={getAssignedPromptId(app.bundleId)}
+                  onAssign={(promptId) => handleAssign(app.bundleId, promptId)}
+                />
               </div>
             ))}
           </div>
