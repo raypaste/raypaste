@@ -43,7 +43,7 @@ function AppPromptCombobox({
         placeholder="No prompt"
         showTrigger
         showClear={!!assignedPromptId}
-        className="min-w-40 max-w-64"
+        className="max-w-64 min-w-40"
       />
       <ComboboxContent className="min-w-56">
         {filtered.length === 0 && (
