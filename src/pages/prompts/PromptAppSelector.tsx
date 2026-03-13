@@ -77,7 +77,7 @@ export function PromptAppSelector({
               <ComboboxItem
                 key={app.bundleId}
                 value={app.bundleId}
-                className="py-1 pl-3"
+                className="py-2 pl-3"
               >
                 {app.name}
               </ComboboxItem>

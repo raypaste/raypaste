@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { Search, Trash2 } from "lucide-react";
 import { useAppsStore } from "#/stores";
+import { Input } from "#/components/ui/input";
 import {
   listCompletions,
   listDistinctPrompts,
@@ -116,17 +117,20 @@ export function HistoryPage() {
   return (
     <div className="flex h-full overflow-hidden">
       {/* ── Left panel ── */}
-      <div className="border-border flex w-[42%] shrink-0 flex-col border-r">
+      <div className="border-border flex w-[42%] shrink-0 flex-col border-t border-r">
         {/* Search */}
-        <div className="border-border shrink-0 border-b px-4 py-3">
-          <div className="bg-muted/40 flex items-center gap-2 rounded-lg px-3 py-2">
-            <Search size={13} className="text-muted-foreground shrink-0" />
-            <input
+        <div className="border-border shrink-0 border-b p-2">
+          <div className="relative">
+            <Search
+              size={14}
+              className="text-muted-foreground pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2"
+            />
+            <Input
               type="text"
               value={search}
               onChange={(e) => handleSearchChange(e.target.value)}
               placeholder="Search history…"
-              className="text-foreground placeholder:text-muted-foreground w-full bg-transparent text-[13px] focus:outline-none"
+              className="bg-muted/40 text-[13px] h-9 pl-9 focus-visible:ring-0"
             />
           </div>
         </div>
