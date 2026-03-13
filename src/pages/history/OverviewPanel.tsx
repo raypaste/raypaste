@@ -18,7 +18,7 @@ import {
   DIALOG_CONTENT_CLS,
   DIALOG_CANCEL_CLS,
   DIALOG_ACTION_DESTRUCTIVE_CLS,
-} from "#/components/history/constants";
+} from "#/pages/history/constants";
 
 function ClearHistoryDialog({ onConfirm }: { onConfirm: () => void }) {
   const [open, setOpen] = useState(false);
@@ -28,7 +28,7 @@ function ClearHistoryDialog({ onConfirm }: { onConfirm: () => void }) {
         render={
           <button
             type="button"
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/8 bg-white/3 px-4 py-2 text-[12px] text-neutral-400 transition-colors hover:border-white/12 hover:bg-white/5 hover:text-neutral-200"
+            className="border-border bg-muted/20 text-muted-foreground hover:border-border hover:bg-muted/30 hover:text-foreground flex cursor-pointer items-center justify-center gap-2 rounded-lg border px-4 py-2 text-[12px] transition-colors"
           />
         }
       >
@@ -37,13 +37,13 @@ function ClearHistoryDialog({ onConfirm }: { onConfirm: () => void }) {
       </AlertDialogTrigger>
       <AlertDialogContent size="sm" className={DIALOG_CONTENT_CLS}>
         <AlertDialogHeader>
-          <AlertDialogMedia className="bg-white/6">
-            <X className="text-neutral-300" />
+          <AlertDialogMedia className="bg-muted/40">
+            <X className="text-muted-foreground" />
           </AlertDialogMedia>
           <AlertDialogTitle className="text-[15px] font-semibold">
             Clear history?
           </AlertDialogTitle>
-          <AlertDialogDescription className="text-neutral-500">
+          <AlertDialogDescription className="text-muted-foreground">
             All log entries will be permanently deleted. Overview stats are
             preserved.
           </AlertDialogDescription>
@@ -75,7 +75,7 @@ function ResetAllDialog({ onConfirm }: { onConfirm: () => void }) {
         render={
           <button
             type="button"
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-red-900/40 bg-red-950/20 px-4 py-2 text-[12px] text-red-500/70 transition-colors hover:border-red-800/50 hover:bg-red-950/40 hover:text-red-400"
+            className="border-destructive/30 bg-destructive/10 text-destructive/70 hover:border-destructive/50 hover:bg-destructive/20 hover:text-destructive flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border px-4 py-2 text-[12px] transition-colors"
           />
         }
       >
@@ -90,9 +90,9 @@ function ResetAllDialog({ onConfirm }: { onConfirm: () => void }) {
           <AlertDialogTitle className="text-[15px] font-semibold">
             Reset all data?
           </AlertDialogTitle>
-          <AlertDialogDescription className="text-neutral-500">
+          <AlertDialogDescription className="text-muted-foreground">
             Permanently deletes all log entries{" "}
-            <span className="text-neutral-300">and</span> resets all stats to
+            <span className="text-foreground/80">and</span> resets all stats to
             zero. This cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -146,12 +146,12 @@ export function OverviewPanel({
       {/* OVERVIEW */}
       <section>
         <div className="mb-3 flex items-center gap-2">
-          <BarChart2 size={13} className="text-neutral-500" />
-          <h3 className="text-[11px] font-semibold tracking-[0.14em] text-neutral-500 uppercase">
+          <BarChart2 size={13} className="text-muted-foreground" />
+          <h3 className="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase">
             Overview
           </h3>
         </div>
-        <div className="overflow-hidden rounded-xl border border-white/8 bg-white/3">
+        <div className="border-border bg-muted/20 overflow-hidden rounded-xl border">
           {(
             [
               { label: "Total Completions", value: stats.totalCompletions },
@@ -165,10 +165,10 @@ export function OverviewPanel({
           ).map(({ label, value }, i) => (
             <div
               key={label}
-              className={`flex items-center justify-between px-4 py-2.5 ${i > 0 ? "border-t border-white/6" : ""}`}
+              className={`flex items-center justify-between px-4 py-2.5 ${i > 0 ? "border-border border-t" : ""}`}
             >
-              <span className="text-[13px] text-neutral-300">{label}</span>
-              <span className="text-[13px] font-medium text-neutral-100">
+              <span className="text-foreground/80 text-[13px]">{label}</span>
+              <span className="text-foreground text-[13px] font-medium">
                 {value}
               </span>
             </div>
@@ -180,21 +180,21 @@ export function OverviewPanel({
       {promptEntries.length > 0 && (
         <section>
           <div className="mb-3 flex items-center gap-2">
-            <MessageSquare size={13} className="text-neutral-500" />
-            <h3 className="text-[11px] font-semibold tracking-[0.14em] text-neutral-500 uppercase">
+            <MessageSquare size={13} className="text-muted-foreground" />
+            <h3 className="text-muted-foreground text-[11px] font-semibold tracking-[0.14em] uppercase">
               Per Prompt
             </h3>
           </div>
-          <div className="overflow-hidden rounded-xl border border-white/8 bg-white/3">
+          <div className="border-border bg-muted/20 overflow-hidden rounded-xl border">
             {promptEntries.map(([id, data], i) => (
               <div
                 key={id}
-                className={`flex items-center justify-between px-4 py-2.5 ${i > 0 ? "border-t border-white/6" : ""}`}
+                className={`flex items-center justify-between px-4 py-2.5 ${i > 0 ? "border-border border-t" : ""}`}
               >
-                <span className="truncate text-[13px] text-neutral-300">
+                <span className="text-foreground/80 truncate text-[13px]">
                   {promptNames[id] ?? id}
                 </span>
-                <span className="ml-4 shrink-0 text-[13px] font-medium text-neutral-100">
+                <span className="text-foreground ml-4 shrink-0 text-[13px] font-medium">
                   {data.uses}
                 </span>
               </div>

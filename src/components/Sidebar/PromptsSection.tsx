@@ -63,13 +63,13 @@ export function PromptsSection({
         className={cn(
           "flex w-full cursor-pointer items-center gap-1.5 rounded-md py-1 pr-2 pl-8 text-left text-[13px] transition-colors",
           isSelected
-            ? "bg-neutral-800 text-neutral-100"
-            : "text-neutral-300 hover:bg-neutral-800 hover:text-neutral-100",
+            ? "bg-secondary text-foreground"
+            : "text-muted-foreground hover:bg-secondary hover:text-foreground",
         )}
       >
         <span className="flex-1 truncate">{name}</span>
         {isDefault && (
-          <Star className="h-3 w-3 shrink-0 fill-green-400 text-green-400" />
+          <Star className="fill-primary text-primary h-3 w-3 shrink-0" />
         )}
       </button>
     );
@@ -77,7 +77,7 @@ export function PromptsSection({
 
   return (
     <div className="mt-4">
-      <p className="mb-1 px-3 text-xs font-semibold tracking-wider text-neutral-400 uppercase select-none">
+      <p className="text-muted-foreground mb-1 px-3 text-xs font-semibold tracking-wider uppercase select-none">
         Prompts
       </p>
       <div className="space-y-0.5">
@@ -90,7 +90,7 @@ export function PromptsSection({
               open={isOpen}
               onOpenChange={() => toggleGroup(app.bundleId)}
             >
-              <CollapsibleTrigger className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm text-neutral-200 transition-colors select-none hover:bg-neutral-800 hover:text-neutral-100">
+              <CollapsibleTrigger className="text-foreground/80 hover:bg-secondary hover:text-foreground flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors select-none">
                 <ChevronRight
                   className={cn(
                     "h-3.5 w-3.5 shrink-0 transition-transform duration-150",
@@ -120,7 +120,7 @@ export function PromptsSection({
             open={resolvedOpenGroups.has("__ungrouped__")}
             onOpenChange={() => toggleGroup("__ungrouped__")}
           >
-            <CollapsibleTrigger className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm text-neutral-200 transition-colors select-none hover:bg-neutral-800 hover:text-neutral-100">
+            <CollapsibleTrigger className="text-foreground/80 hover:bg-secondary hover:text-foreground flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors select-none">
               <ChevronRight
                 className={cn(
                   "h-3.5 w-3.5 shrink-0 transition-transform duration-150",

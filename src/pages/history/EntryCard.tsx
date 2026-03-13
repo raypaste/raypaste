@@ -18,7 +18,7 @@ export function EntryCard({ row, appName, onClick, onDelete }: EntryCardProps) {
     <button
       type="button"
       onClick={onClick}
-      className="group/card w-full cursor-pointer border-b border-white/6 px-4 pt-3 pb-1.5 text-left transition-colors hover:bg-white/4"
+      className="group/card border-border hover:bg-muted/40 w-full cursor-pointer border-b px-4 pt-3 pb-1.5 text-left transition-colors"
     >
       {/* App + time */}
       <div className="mb-1 flex items-center justify-between gap-2">
@@ -29,32 +29,34 @@ export function EntryCard({ row, appName, onClick, onDelete }: EntryCardProps) {
           >
             {initial}
           </span>
-          <span className="truncate text-[11px] text-neutral-400">{name}</span>
+          <span className="text-muted-foreground truncate text-[11px]">
+            {name}
+          </span>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
           {row.isReviewMode ? (
-            <span className="flex items-center gap-0.5 rounded-full bg-violet-500/15 px-1.5 py-0.5 text-[10px] text-violet-400">
+            <span className="flex items-center gap-0.5 rounded-full bg-violet-500/15 px-1.5 py-0.5 text-[10px] text-violet-500">
               Review
             </span>
           ) : (
-            <span className="rounded-full bg-sky-500/12 px-1.5 py-0.5 text-[10px] text-sky-400">
+            <span className="rounded-full bg-sky-500/12 px-1.5 py-0.5 text-[10px] text-sky-500">
               Instant
             </span>
           )}
           <StatusIcon row={row} />
-          <span className="text-[11px] whitespace-nowrap text-neutral-500">
+          <span className="text-muted-foreground text-[11px] whitespace-nowrap">
             {timeAgo(row.timestamp)}
           </span>
         </div>
       </div>
 
       {/* Prompt name */}
-      <p className="mb-0.5 text-[13px] leading-snug font-semibold text-neutral-200">
+      <p className="text-foreground mb-0.5 text-[13px] leading-snug font-semibold">
         {row.promptName}
       </p>
 
       {/* Input preview */}
-      <p className="line-clamp-2 text-[11px] leading-relaxed text-neutral-500">
+      <p className="text-muted-foreground line-clamp-2 text-[11px] leading-relaxed">
         {row.hadError ? (
           <span className="text-red-500/70">{row.errorMessage}</span>
         ) : (
@@ -70,7 +72,7 @@ export function EntryCard({ row, appName, onClick, onDelete }: EntryCardProps) {
             e.stopPropagation();
             onDelete();
           }}
-          className="rounded p-0.5 text-neutral-600 transition-colors hover:cursor-pointer hover:text-red-400"
+          className="text-muted-foreground/60 rounded p-0.5 transition-colors hover:cursor-pointer hover:text-red-400"
         >
           <XCircle size={12} />
         </button>

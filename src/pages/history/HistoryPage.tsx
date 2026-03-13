@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { Search, Trash2 } from "lucide-react";
 import { useAppsStore } from "#/stores";
+import { Input } from "#/components/ui/input";
 import {
   listCompletions,
   listDistinctPrompts,
@@ -22,14 +23,14 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
 } from "#/components/ui/alert-dialog";
-import { EntryCard } from "#/components/history/EntryCard";
-import { DetailDialog } from "#/components/history/DetailDialog";
-import { OverviewPanel } from "#/components/history/OverviewPanel";
+import { EntryCard } from "#/pages/history/EntryCard";
+import { DetailDialog } from "#/pages/history/DetailDialog";
+import { OverviewPanel } from "#/pages/history/OverviewPanel";
 import {
   DIALOG_CONTENT_CLS,
   DIALOG_CANCEL_CLS,
   DIALOG_ACTION_DESTRUCTIVE_CLS,
-} from "#/components/history/constants";
+} from "#/pages/history/constants";
 
 const LIST_LIMIT = 200;
 
@@ -116,28 +117,31 @@ export function HistoryPage() {
   return (
     <div className="flex h-full overflow-hidden">
       {/* ── Left panel ── */}
-      <div className="flex w-[42%] shrink-0 flex-col border-r border-white/6">
+      <div className="border-border flex w-[42%] shrink-0 flex-col border-t border-r">
         {/* Search */}
-        <div className="shrink-0 border-b border-white/6 px-4 py-3">
-          <div className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2">
-            <Search size={13} className="shrink-0 text-neutral-500" />
-            <input
+        <div className="border-border shrink-0 border-b p-2">
+          <div className="relative">
+            <Search
+              size={14}
+              className="text-muted-foreground pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2"
+            />
+            <Input
               type="text"
               value={search}
               onChange={(e) => handleSearchChange(e.target.value)}
               placeholder="Search history…"
-              className="w-full bg-transparent text-[13px] text-neutral-200 placeholder:text-neutral-600 focus:outline-none"
+              className="bg-muted/40 text-[13px] h-9 pl-9 focus-visible:ring-0"
             />
           </div>
         </div>
 
         {/* List */}
         {isEmpty ? (
-          <div className="flex flex-1 items-center justify-center text-[13px] text-neutral-600">
+          <div className="text-muted-foreground flex flex-1 items-center justify-center text-[13px]">
             No completions yet.
           </div>
         ) : rows.length === 0 ? (
-          <div className="flex flex-1 items-center justify-center text-[13px] text-neutral-600">
+          <div className="text-muted-foreground flex flex-1 items-center justify-center text-[13px]">
             No results.
           </div>
         ) : (
@@ -165,7 +169,7 @@ export function HistoryPage() {
             onResetAll={handleResetAll}
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-[13px] text-neutral-600">
+          <div className="text-muted-foreground flex h-full items-center justify-center text-[13px]">
             Loading…
           </div>
         )}
@@ -185,13 +189,13 @@ export function HistoryPage() {
       >
         <AlertDialogContent size="sm" className={DIALOG_CONTENT_CLS}>
           <AlertDialogHeader>
-            <AlertDialogMedia className="bg-white/6">
-              <Trash2 className="text-neutral-300" />
+            <AlertDialogMedia className="bg-muted/40">
+              <Trash2 className="text-muted-foreground" />
             </AlertDialogMedia>
             <AlertDialogTitle className="text-[15px] font-semibold">
               Delete this entry?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-neutral-500">
+            <AlertDialogDescription className="text-muted-foreground">
               This log entry will be permanently removed. Stats are not
               affected.
             </AlertDialogDescription>

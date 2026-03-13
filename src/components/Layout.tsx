@@ -4,10 +4,10 @@ import { Sidebar } from "#/components/Sidebar/Sidebar";
 import { TitleBar } from "#/components/TitleBar";
 import { ToastContainer } from "#/components/Toast/ToastContainer";
 import type { Page } from "#/components/Sidebar/SidebarNav";
-import { NewPromptPage } from "#/pages/NewPromptPage";
-import { PromptPage } from "#/pages/PromptPage";
+import { NewPromptPage } from "#/pages/prompts/NewPromptPage";
+import { PromptPage } from "#/pages/prompts/PromptPage";
 import { AppsPage } from "#/pages/AppsPage";
-import { HistoryPage } from "#/pages/HistoryPage";
+import { HistoryPage } from "#/pages/history/HistoryPage";
 import { SettingsPage } from "#/pages/SettingsPage";
 import { usePromptsStore, useAppsStore } from "#/stores";
 import type { InstalledApp } from "#/stores";
@@ -52,9 +52,9 @@ export function Layout() {
         selectedPromptId={selectedPromptId}
         onNavigate={handleNavigate}
       />
-      <main className="flex flex-1 flex-col overflow-hidden bg-[#1a1a1a]">
+      <main className="bg-background flex flex-1 flex-col overflow-hidden">
         <div className="px-6 pt-[20px] pb-4">
-          <h1 className="text-base font-semibold text-white/80 capitalize">
+          <h1 className="text-foreground/80 text-base font-semibold capitalize">
             {getPageTitle(activePage, selectedPromptName)}
           </h1>
         </div>
