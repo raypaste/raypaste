@@ -14,7 +14,19 @@ export async function runInstantMode(p: ModeParams) {
   // briefly brings the Raypaste application to the foreground on macOS.
   await invoke("activate_app", { targetPid: p.target_pid }).catch(() => {});
 
-  showProgressOverlay();
+  const progressWin = showProgressOverlay();
+
+  // Wait for the window to be created on the Rust side before streaming.
+  // new WebviewWindow() is async — on fast completions (e.g. dry run) the
+  // stream can finish before the window exists, making close() a no-op.
+  await new Promise<void>((resolve) => {
+    if (!progressWin) {
+      resolve();
+      return;
+    }
+    progressWin.once("tauri://created", () => resolve());
+    setTimeout(resolve, 2000); // safety fallback
+  });
 
   let accumulatedText = "";
 
@@ -62,6 +74,13 @@ export async function runInstantMode(p: ModeParams) {
       provider: p.provider,
     });
     await emit("raypaste://completion-saved");
+    // Re-activate the target app before closing the overlay — when the overlay
+    // window closes, macOS would otherwise focus the Raypaste main window.
+    await invoke("activate_app", { targetPid: p.target_pid }).catch(() => {});
+    // Close via handle (reliable — the event-based approach has a race condition
+    // where the overlay's JS bundle may not have loaded before the event fires).
+    // Emit the event too as a fallback for when progressWin is null.
+    progressWin?.close();
     await emit("raypaste://instant-done");
   } catch (err) {
     if (isAbortError(err)) {
@@ -69,6 +88,7 @@ export async function runInstantMode(p: ModeParams) {
     }
 
     const errorMessage = err instanceof Error ? err.message : String(err);
+    progressWin?.close();
     showToastOverlay(`Error: ${errorMessage}`, "error");
 
     await saveCompletion({
