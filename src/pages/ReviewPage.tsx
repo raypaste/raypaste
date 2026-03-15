@@ -43,7 +43,11 @@ export function ReviewPage() {
   const shortcuts = getShortcutLabel();
 
   const [text, setText] = useState(
-    initial?.loading === true ? initial.streamedText : (initial?.loading === false ? initial.completedText : ""),
+    initial?.loading === true
+      ? initial.streamedText
+      : initial?.loading === false
+        ? initial.completedText
+        : "",
   );
   const [originalText] = useState(initial ? initial.originalText : "");
   const [phase, setPhase] = useState<Phase>(() => {
@@ -198,7 +202,11 @@ export function ReviewPage() {
             </svg>
           )}
           <span className="text-xs font-semibold tracking-[0.02em] text-neutral-200">
-            {isLoading ? "Generating…" : isError ? "Error" : "Review Completion"}
+            {isLoading
+              ? "Generating…"
+              : isError
+                ? "Error"
+                : "Review Completion"}
           </span>
         </div>
         <div
@@ -234,7 +242,9 @@ export function ReviewPage() {
       {/* Completion editor / error */}
       <div className="flex flex-1 flex-col overflow-hidden bg-neutral-950/96 px-6 py-5">
         {isError ? (
-          <p className="text-sm leading-relaxed text-red-400">{phase.message}</p>
+          <p className="text-sm leading-relaxed text-red-400">
+            {phase.message}
+          </p>
         ) : (
           <>
             <p className="mb-2 shrink-0 text-[10px] font-semibold tracking-[0.18em] text-neutral-400 uppercase">
