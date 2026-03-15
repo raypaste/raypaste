@@ -11,6 +11,25 @@ pnpm install
 pnpm tauri dev
 ```
 
+## Dry Run Mode (Local Development)
+
+To test the app without making real LLM API calls, enable dry run mode:
+
+```bash
+# Copy the example config
+cp .env.local.example .env.local
+
+# Set VITE_DRY_RUN=true in .env.local
+# Then run as normal
+pnpm tauri dev
+```
+
+When dry run is active:
+
+- LLM calls are skipped entirely (no API costs)
+- Selected text is echoed back with a `[DRY RUN]` prefix
+- API key is not required
+
 ## API Keys and LLM Connections
 
 Raypaste offers 2 ways to get LLM completions **direct-to-provider** and in the future **raypaste-api**.
