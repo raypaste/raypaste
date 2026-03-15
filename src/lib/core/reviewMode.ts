@@ -1,3 +1,4 @@
+import { invoke } from "@tauri-apps/api/core";
 import { emit } from "@tauri-apps/api/event";
 import { getLLMClient } from "#/services/llm";
 import {
@@ -9,6 +10,10 @@ import { ModeParams, isAbortError } from "./types";
 
 // Review mode is used when the user wants to review the completion before applying it to the target app.
 export async function runReviewMode(p: ModeParams) {
+  // Re-activate the target app before showing overlay — creating a WebviewWindow
+  // briefly brings the Raypaste application to the foreground on macOS.
+  await invoke("activate_app", { targetPid: p.target_pid }).catch(() => {});
+
   // Write loading state to localStorage, then open the review window
   localStorage.setItem(
     REVIEW_STORAGE_KEY,

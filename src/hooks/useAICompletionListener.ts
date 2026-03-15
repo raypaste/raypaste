@@ -7,6 +7,7 @@ import { showToastOverlay } from "#/services/overlayWindows";
 import { updateCompletionOutcome } from "#/services/db";
 import { runReviewMode } from "#/lib/core/reviewMode";
 import { runInstantMode } from "#/lib/core/instantMode";
+import { invoke } from "@tauri-apps/api/core";
 
 interface HotkeyPayload {
   app: string;
@@ -18,6 +19,7 @@ interface ReviewOutcomePayload {
   completionId: string;
   finalText: string | null;
   wasApplied: boolean;
+  targetPid: number;
 }
 
 export function useAICompletionListener() {
@@ -114,20 +116,30 @@ export function useAICompletionListener() {
     const unlistenOutcome = listen<ReviewOutcomePayload>(
       "raypaste://review-outcome",
       async (event) => {
-        const { completionId, finalText, wasApplied } = event.payload;
+        const { completionId, finalText, wasApplied, targetPid } =
+          event.payload;
         await updateCompletionOutcome(
           completionId,
           finalText,
           wasApplied,
         ).catch(() => {});
+        // Restore focus to target app
+        await invoke("activate_app", { targetPid }).catch(() => {});
       },
     );
 
     // User cancelled from review overlay during streaming
-    const unlistenStreamCancel = listen("raypaste://stream-cancel", () => {
-      abortControllerRef.current?.abort();
-      abortControllerRef.current = null;
-    });
+    const unlistenStreamCancel = listen<{ targetPid: number }>(
+      "raypaste://stream-cancel",
+      async (event) => {
+        abortControllerRef.current?.abort();
+        abortControllerRef.current = null;
+        // Restore focus to target app
+        await invoke("activate_app", {
+          targetPid: event.payload.targetPid,
+        }).catch(() => {});
+      },
+    );
 
     // User cancelled from progress overlay during instant mode
     const unlistenInstantCancel = listen("raypaste://instant-cancel", () => {

@@ -123,6 +123,7 @@ export function ReviewPage() {
         completionId: phase.completionId,
         finalText: text,
         wasApplied: true,
+        targetPid: phase.targetPid,
       });
       await win.close();
     } catch {
@@ -137,6 +138,7 @@ export function ReviewPage() {
         completionId: phase.completionId,
         finalText: null,
         wasApplied: false,
+        targetPid: phase.targetPid,
       });
     }
     await win.close();
@@ -144,9 +146,11 @@ export function ReviewPage() {
 
   const handleCancel = useCallback(async () => {
     localStorage.removeItem(REVIEW_STORAGE_KEY);
-    await emit("raypaste://stream-cancel");
+    await emit("raypaste://stream-cancel", {
+      targetPid: initial?.targetPid ?? 0,
+    });
     await win.close();
-  }, [win]);
+  }, [initial?.targetPid, win]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
