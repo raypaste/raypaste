@@ -10,10 +10,11 @@ import { ModeParams, isAbortError } from "./types";
 
 // Instant mode is used when the user wants to apply the completion to the target app immediately.
 export async function runInstantMode(p: ModeParams) {
-  const progressWin = showProgressOverlay();
-  // Re-activate the target app immediately — creating a WebviewWindow briefly
-  // brings the Raypaste application to the foreground on macOS.
-  invoke("activate_app", { targetPid: p.target_pid }).catch(() => {});
+  // Re-activate the target app before showing overlay — creating a WebviewWindow
+  // briefly brings the Raypaste application to the foreground on macOS.
+  await invoke("activate_app", { targetPid: p.target_pid }).catch(() => {});
+
+  showProgressOverlay();
 
   let accumulatedText = "";
 
@@ -61,9 +62,9 @@ export async function runInstantMode(p: ModeParams) {
       provider: p.provider,
     });
     await emit("raypaste://completion-saved");
+    await emit("raypaste://instant-done");
   } catch (err) {
     if (isAbortError(err)) {
-      progressWin?.close();
       return;
     }
 
@@ -91,9 +92,4 @@ export async function runInstantMode(p: ModeParams) {
       provider: p.provider,
     }).catch(() => {});
   }
-
-  // Close the progress overlay from the main window — no cross-window
-  // event needed. This is reliable regardless of whether the overlay
-  // window has finished loading its JS bundle.
-  progressWin?.close();
 }

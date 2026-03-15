@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { emit } from "@tauri-apps/api/event";
+import { emit, listen } from "@tauri-apps/api/event";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 
 export function ProgressPage() {
@@ -14,6 +14,15 @@ export function ProgressPage() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
+  }, [win]);
+
+  useEffect(() => {
+    const unlistenDone = listen("raypaste://instant-done", () => {
+      win.close();
+    });
+    return () => {
+      unlistenDone.then((fn) => fn());
+    };
   }, [win]);
 
   return (
