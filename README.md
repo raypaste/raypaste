@@ -45,7 +45,9 @@ For detailed compatibility information and contributor guidance on cross-platfor
 - **Universal** — works with any app: editors, browsers, terminals, design tools
 - **Hotkey-driven** — `⌘ + Ctrl + R` allows you to get an AI response in-place instantly.
 - **Per-app prompts** — assign different prompts to different applications for custom repeated workflows
-- **Review mode** — optionally preview and edit the AI output before accepting
+- **Review mode** — preview, stream, and edit AI output in real-time before accepting or rejecting
+- **Instant mode** — processing overlay shows live progress while text is being written back directly to your app
+- **Cancellation** — press Esc during processing to abort the current request
 - **Privacy-first direct mode** — for those wanting to keep data between you and your AI provider only, you can do so with direct-mode. Your prompt and input text goes straight to OpenRouter or Cerebras, never through Raypaste servers, and the output is returned only to your device
 - **Prompt library** — create, edit, and manage reusable prompts for your needs
 - **History** - view your usage stats and past AI responses (inputs, outputs, prompt used, etc)
@@ -76,9 +78,11 @@ For full setup instructions see the **[getting started guide](docs/DEV_GETTING_S
 Raypaste currently supports two **direct-to-provider** modes (your data never touches Raypaste servers):
 
 - **[OpenRouter](https://openrouter.ai/)** — access to a wide range of models
-- **[Cerebras](https://www.cerebras.ai/)** — ultra-fast inference
+  - [Models used by Raypaste users](https://openrouter.ai/apps?url=https%3A%2F%2Fraypaste.com%2F) — see what models people are using with Raypaste through OpenRouter
+- **[Cerebras](https://www.cerebras.ai/)** — ultra-fast inference powered by their Wafer Scale Engine
+  - [Cerebras Chips](https://www.cerebras.ai/chip) - read more about Cerebras hardware
 
-Configure your API keys in the app's Settings page (API keys are stored on your device).
+Configure your API keys in the Raypaste app's Settings page (your API keys are stored on your device and do not pass through Raypaste's servers).
 
 ## Contributing
 
