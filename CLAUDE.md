@@ -47,8 +47,8 @@ Hotkey **Cmd+Ctrl+R** triggers the pipeline:
 
 **Overlay creation** (`src/services/overlayWindows.ts`):
 
-- `showReviewOverlay()` — creates 560×460 centered window for review mode
-- `showProgressOverlay()` — creates 280×52 centered window for instant mode loading
+- `showReviewOverlay()` — creates 600×700 centered window for review mode
+- `showProgressOverlay()` — creates 280×50 centered window for instant mode loading
 - `showToastOverlay()` — creates small notification at bottom-right
 
 **Data passing:**

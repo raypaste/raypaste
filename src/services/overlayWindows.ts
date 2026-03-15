@@ -81,8 +81,8 @@ export const REVIEW_STORAGE_KEY = "raypaste-pending-review";
  * localStorage under REVIEW_STORAGE_KEY before calling this.
  */
 export function showReviewOverlay(): WebviewWindow | null {
-  const width = 560;
-  const height = 460;
+  const width = 600;
+  const height = 700;
   const x = Math.round((window.screen.availWidth - width) / 2);
   const y = Math.round((window.screen.availHeight - height) / 2);
 
@@ -108,7 +108,7 @@ export function showReviewOverlay(): WebviewWindow | null {
 /** Open the small progress spinner overlay for instant-mode LLM requests. */
 export function showProgressOverlay(): WebviewWindow | null {
   const width = 280;
-  const height = 52;
+  const height = 50;
   const x = Math.round((window.screen.availWidth - width) / 2);
   const y = Math.round((window.screen.availHeight - height) / 2);
 
