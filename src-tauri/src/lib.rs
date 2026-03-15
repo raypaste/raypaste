@@ -55,6 +55,7 @@ pub fn run() {
             commands::apps::get_icon_base64,
             commands::apps::get_icon_base64_for_icns,
             commands::focused_app::get_focused_app,
+            commands::focused_app::activate_app,
             commands::text::get_selected_text,
             commands::text::write_text_back,
         ])

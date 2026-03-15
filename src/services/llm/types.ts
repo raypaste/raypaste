@@ -27,10 +27,15 @@ export interface LLMCompletion {
 }
 
 export interface LLMClient {
-  complete(req: LLMRequest, apiKey: string): Promise<LLMCompletion>;
+  complete(
+    req: LLMRequest,
+    apiKey: string,
+    signal?: AbortSignal,
+  ): Promise<LLMCompletion>;
   stream(
     req: LLMRequest,
     apiKey: string,
     onChunk: (text: string) => void,
+    signal?: AbortSignal,
   ): Promise<void>;
 }

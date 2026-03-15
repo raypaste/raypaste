@@ -47,7 +47,7 @@ export function NotificationPage() {
           <kbd
             onClick={() => win.close()}
             title="Dismiss"
-            className="shrink-0 cursor-pointer rounded border border-current/20 bg-neutral-300 px-1 py-0.5 text-xs font-medium text-neutral-800 transition-opacity select-none hover:opacity-70"
+            className="shrink-0 cursor-pointer rounded border border-current/20 bg-neutral-200 px-1 py-0.5 text-xs font-medium text-neutral-800 transition-opacity select-none hover:opacity-70"
           >
             Esc
           </kbd>
