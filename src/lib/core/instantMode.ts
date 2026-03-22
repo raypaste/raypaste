@@ -17,15 +17,17 @@ export async function runInstantMode(p: ModeParams) {
 
   localStorage.setItem(
     INSTANT_PROGRESS_STORAGE_KEY,
-    JSON.stringify({ loading: true }),
+    JSON.stringify({ loading: true, targetPid: p.target_pid }),
   );
   const progressWin = showProgressOverlay();
 
   let accumulatedText = "";
   const finishProgressOverlay = async () => {
+    // Persist the finished state so an overlay that mounts late can self-close
+    // instead of getting stuck with stale "processing" UI.
     localStorage.setItem(
       INSTANT_PROGRESS_STORAGE_KEY,
-      JSON.stringify({ loading: false }),
+      JSON.stringify({ loading: false, targetPid: p.target_pid }),
     );
     if (progressWin) {
       progressWin.close().catch(() => {});

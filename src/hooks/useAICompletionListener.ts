@@ -142,10 +142,18 @@ export function useAICompletionListener() {
     );
 
     // User cancelled from progress overlay during instant mode
-    const unlistenInstantCancel = listen("raypaste://instant-cancel", () => {
-      abortControllerRef.current?.abort();
-      abortControllerRef.current = null;
-    });
+    const unlistenInstantCancel = listen<{ targetPid: number }>(
+      "raypaste://instant-cancel",
+      async (event) => {
+        abortControllerRef.current?.abort();
+        abortControllerRef.current = null;
+        // Match review-mode cancellation behavior by returning focus to the
+        // original target app after the instant-mode overlay is dismissed.
+        await invoke("activate_app", {
+          targetPid: event.payload.targetPid,
+        }).catch(() => {});
+      },
+    );
 
     return () => {
       unlistenHotkey.then((fn) => fn());

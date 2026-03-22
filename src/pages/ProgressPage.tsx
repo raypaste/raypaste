@@ -8,26 +8,32 @@ import {
 
 export function ProgressPage() {
   const win = getCurrentWebviewWindow();
+  const progressState = loadProgressState();
 
   useEffect(() => {
-    const state = loadProgressState();
-    if (!state || state.loading === false) {
+    // Instant completions can finish before this overlay hydrates, so use the
+    // persisted state as the source of truth for whether the window should stay open.
+    if (!progressState || progressState.loading === false) {
       localStorage.removeItem(INSTANT_PROGRESS_STORAGE_KEY);
       win.close();
     }
-  }, [win]);
+  }, [progressState, win]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         localStorage.removeItem(INSTANT_PROGRESS_STORAGE_KEY);
-        emit("raypaste://instant-cancel").catch(() => {});
+        // Echo the original target PID back to the main listener so canceling
+        // instant mode restores focus to the app the user came from.
+        emit("raypaste://instant-cancel", {
+          targetPid: progressState?.targetPid ?? 0,
+        }).catch(() => {});
         win.close();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [win]);
+  }, [progressState, win]);
 
   useEffect(() => {
     const handleClose = () => {

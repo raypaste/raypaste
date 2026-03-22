@@ -79,6 +79,7 @@ export const INSTANT_PROGRESS_STORAGE_KEY = "raypaste-pending-instant";
 
 export interface PendingInstantProgressStorage {
   loading: boolean;
+  targetPid: number;
 }
 
 /**
