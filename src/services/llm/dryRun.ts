@@ -1,13 +1,11 @@
 import type { LLMClient, LLMRequest } from "./types";
 
 export const dryRunClient: LLMClient = {
-  async complete(req: LLMRequest) {
-    const userMessage =
-      [...req.messages].reverse().find((m) => m.role === "user")?.content ?? "";
-    await new Promise((r) => setTimeout(r, 500)); // simulate latency
+  async complete(req: LLMRequest, _apiKey: string, signal?: AbortSignal) {
+    await waitForLatency(signal);
 
     return {
-      text: `[DRY RUN] ${userMessage}`,
+      text: getDryRunText(req),
       usage: { input_tokens: null, output_tokens: null },
     };
   },
@@ -16,14 +14,37 @@ export const dryRunClient: LLMClient = {
     req: LLMRequest,
     _apiKey: string,
     onChunk: (text: string) => void,
+    signal?: AbortSignal,
   ) {
-    const userMessage =
-      [...req.messages].reverse().find((m) => m.role === "user")?.content ?? "";
-    const words = `[DRY RUN] ${userMessage}`.split(" ");
-
-    for (const word of words) {
-      await new Promise((r) => setTimeout(r, 40));
-      onChunk(word + " ");
-    }
+    await waitForLatency(signal);
+    onChunk(getDryRunText(req));
   },
 };
+
+function getDryRunText(req: LLMRequest) {
+  const userMessage =
+    [...req.messages].reverse().find((m) => m.role === "user")?.content ?? "";
+  return `[DRY RUN] ${userMessage}`;
+}
+
+function waitForLatency(signal?: AbortSignal, ms = 500) {
+  return new Promise<void>((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      signal?.removeEventListener("abort", onAbort);
+      resolve();
+    }, ms);
+
+    const onAbort = () => {
+      clearTimeout(timeout);
+      signal?.removeEventListener("abort", onAbort);
+      reject(new DOMException("Aborted", "AbortError"));
+    };
+
+    if (signal?.aborted) {
+      onAbort();
+      return;
+    }
+
+    signal?.addEventListener("abort", onAbort, { once: true });
+  });
+}

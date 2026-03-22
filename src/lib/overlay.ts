@@ -1,6 +1,7 @@
 export const OVERLAY = {
   review: "review",
   toast: "toast",
+  progress: "progress",
 } as const;
 
 export type OverlayType = (typeof OVERLAY)[keyof typeof OVERLAY];

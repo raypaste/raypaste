@@ -69,3 +69,14 @@ pub fn activate_app_inner(pid: i32) -> bool {
 pub fn get_focused_app() -> Option<String> {
     get_focused_app_inner()
 }
+
+/// Re-activates the app with the given PID. Fire-and-forget; used to return
+/// focus to the target app after a Tauri overlay window is created (which
+/// briefly activates the Raypaste app on macOS).
+#[tauri::command]
+pub fn activate_app(app: tauri::AppHandle, target_pid: i32) {
+    app.run_on_main_thread(move || {
+        activate_app_inner(target_pid);
+    })
+    .ok();
+}

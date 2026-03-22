@@ -44,7 +44,11 @@ async function parseSSEStream(
 }
 
 export const openrouterClient: LLMClient = {
-  async complete(req: LLMRequest, apiKey: string): Promise<LLMCompletion> {
+  async complete(
+    req: LLMRequest,
+    apiKey: string,
+    signal?: AbortSignal,
+  ): Promise<LLMCompletion> {
     const res = await fetch(BASE_URL, {
       method: "POST",
       headers: {
@@ -53,6 +57,7 @@ export const openrouterClient: LLMClient = {
         ...EXTRA_HEADERS,
       },
       body: JSON.stringify({ ...req, stream: false }),
+      signal,
     });
     if (!res.ok) throw new Error(`OpenRouter error: ${res.status}`);
 
@@ -74,6 +79,7 @@ export const openrouterClient: LLMClient = {
     req: LLMRequest,
     apiKey: string,
     onChunk: (text: string) => void,
+    signal?: AbortSignal,
   ): Promise<void> {
     const res = await fetch(BASE_URL, {
       method: "POST",
@@ -83,6 +89,7 @@ export const openrouterClient: LLMClient = {
         ...EXTRA_HEADERS,
       },
       body: JSON.stringify({ ...req, stream: true }),
+      signal,
     });
     if (!res.ok) {
       throw new Error(`OpenRouter error: ${res.status}`);

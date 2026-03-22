@@ -57,21 +57,38 @@ export function showToastOverlay(
   }
 }
 
-export interface PendingReview {
-  completionId: string;
-  completedText: string;
-  originalText: string;
-  targetPid: number;
-  durationMs: number;
-}
+// Stored in localStorage while a review is pending or streaming
+export type PendingReviewStorage =
+  | {
+      loading: true;
+      originalText: string;
+      targetPid: number;
+      streamedText: string;
+    }
+  | {
+      loading: false;
+      completionId: string;
+      completedText: string;
+      originalText: string;
+      targetPid: number;
+      durationMs: number;
+    };
 
 export const REVIEW_STORAGE_KEY = "raypaste-pending-review";
+export const INSTANT_PROGRESS_STORAGE_KEY = "raypaste-pending-instant";
 
-export function showReviewOverlay(data: PendingReview): WebviewWindow | null {
-  localStorage.setItem(REVIEW_STORAGE_KEY, JSON.stringify(data));
+export interface PendingInstantProgressStorage {
+  loading: boolean;
+  targetPid: number;
+}
 
-  const width = 560;
-  const height = 460;
+/**
+ * Open the review overlay window. The caller must write initial state to
+ * localStorage under REVIEW_STORAGE_KEY before calling this.
+ */
+export function showReviewOverlay(): WebviewWindow | null {
+  const width = 600;
+  const height = 700;
   const x = Math.round((window.screen.availWidth - width) / 2);
   const y = Math.round((window.screen.availHeight - height) / 2);
 
@@ -86,6 +103,32 @@ export function showReviewOverlay(data: PendingReview): WebviewWindow | null {
       alwaysOnTop: true,
       skipTaskbar: true,
       focus: true,
+      x,
+      y,
+    });
+  } catch {
+    return null;
+  }
+}
+
+/** Open the small progress spinner overlay for instant-mode LLM requests. */
+export function showProgressOverlay(): WebviewWindow | null {
+  const width = 280;
+  const height = 50;
+  const x = Math.round((window.screen.availWidth - width) / 2);
+  const y = Math.round((window.screen.availHeight - height) / 2);
+
+  try {
+    return new WebviewWindow(`progress-${Date.now()}`, {
+      url: `/?overlay=${OVERLAY.progress}`,
+      width,
+      height,
+      transparent: true,
+      decorations: false,
+      shadow: false,
+      alwaysOnTop: true,
+      skipTaskbar: true,
+      focus: false,
       x,
       y,
     });

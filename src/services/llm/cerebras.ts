@@ -42,7 +42,11 @@ async function parseSSEStream(
 }
 
 export const cerebrasClient: LLMClient = {
-  async complete(req: LLMRequest, apiKey: string): Promise<LLMCompletion> {
+  async complete(
+    req: LLMRequest,
+    apiKey: string,
+    signal?: AbortSignal,
+  ): Promise<LLMCompletion> {
     const res = await fetch(BASE_URL, {
       method: "POST",
       headers: {
@@ -50,6 +54,7 @@ export const cerebrasClient: LLMClient = {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({ ...req, stream: false }),
+      signal,
     });
     if (!res.ok) {
       throw new Error(`Cerebras error: ${res.status}`);
@@ -72,6 +77,7 @@ export const cerebrasClient: LLMClient = {
     req: LLMRequest,
     apiKey: string,
     onChunk: (text: string) => void,
+    signal?: AbortSignal,
   ): Promise<void> {
     const res = await fetch(BASE_URL, {
       method: "POST",
@@ -80,6 +86,7 @@ export const cerebrasClient: LLMClient = {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({ ...req, stream: true }),
+      signal,
     });
     if (!res.ok) {
       throw new Error(`Cerebras error: ${res.status}`);

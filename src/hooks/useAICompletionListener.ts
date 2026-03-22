@@ -1,11 +1,13 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { emit } from "@tauri-apps/api/event";
-import { invoke } from "@tauri-apps/api/core";
 import { usePromptsStore, useSettingsStore } from "#/stores";
-import { getLLMClient, getApiKey } from "#/services/llm";
-import { showToastOverlay, showReviewOverlay } from "#/services/overlayWindows";
-import { saveCompletion, updateCompletionOutcome } from "#/services/db";
+import { getApiKey } from "#/services/llm";
+import { showToastOverlay } from "#/services/overlayWindows";
+import { updateCompletionOutcome } from "#/services/db";
+import { runReviewMode } from "#/lib/core/reviewMode";
+import { runInstantMode } from "#/lib/core/instantMode";
+import { invoke } from "@tauri-apps/api/core";
 
 interface HotkeyPayload {
   app: string;
@@ -17,9 +19,12 @@ interface ReviewOutcomePayload {
   completionId: string;
   finalText: string | null;
   wasApplied: boolean;
+  targetPid: number;
 }
 
 export function useAICompletionListener() {
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   useEffect(() => {
     const unlistenHotkey = listen<HotkeyPayload>(
       "raypaste://hotkey-triggered",
@@ -57,111 +62,53 @@ export function useAICompletionListener() {
           return;
         }
 
+        // Abort any in-flight request and signal its overlay to close
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort();
+          await emit("raypaste://abort-overlay");
+        }
+
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+        const { signal } = controller;
+
         await useSettingsStore.persist.rehydrate();
         const { model, provider, reviewMode } = useSettingsStore.getState();
 
         const completionId = crypto.randomUUID();
         const t0 = Date.now();
 
-        try {
-          const completion = await getLLMClient().complete(
-            {
-              messages: [
-                { role: "system", content: prompt.text },
-                { role: "user", content: selected_text },
-              ],
-              model,
-            },
-            apiKey,
-          );
-          const durationMs = Date.now() - t0;
-
-          if (reviewMode) {
-            await saveCompletion({
-              id: completionId,
-              timestamp: t0,
-              inputText: selected_text,
-              outputText: completion.text,
-              finalText: null,
-              wasApplied: 0,
-              isReviewMode: 1,
-              hadError: 0,
-              errorMessage: null,
-              inputTokens: completion.usage.input_tokens,
-              outputTokens: completion.usage.output_tokens,
-              completionMs: durationMs,
-              appId: app,
-              promptId: prompt.id,
-              promptName: prompt.name,
-              promptText: prompt.text,
-              model,
-              provider,
-            });
-            await emit("raypaste://completion-saved");
-
-            showReviewOverlay({
-              completionId,
-              completedText: completion.text,
-              originalText: selected_text,
-              targetPid: target_pid,
-              durationMs,
-            });
-          } else {
-            await invoke("write_text_back", {
-              text: completion.text,
-              targetPid: target_pid,
-            });
-
-            await saveCompletion({
-              id: completionId,
-              timestamp: t0,
-              inputText: selected_text,
-              outputText: completion.text,
-              finalText: null,
-              wasApplied: 1,
-              isReviewMode: 0,
-              hadError: 0,
-              errorMessage: null,
-              inputTokens: completion.usage.input_tokens,
-              outputTokens: completion.usage.output_tokens,
-              completionMs: durationMs,
-              appId: app,
-              promptId: prompt.id,
-              promptName: prompt.name,
-              promptText: prompt.text,
-              model,
-              provider,
-            });
-            await emit("raypaste://completion-saved");
-          }
-        } catch (err) {
-          const durationMs = Date.now() - t0;
-          const errorMessage = err instanceof Error ? err.message : String(err);
-
-          showToastOverlay(`Error: ${errorMessage}`, "error");
-
-          await saveCompletion({
-            id: completionId,
-            timestamp: t0,
-            inputText: selected_text,
-            outputText: "",
-            finalText: null,
-            wasApplied: 0,
-            isReviewMode: reviewMode ? 1 : 0,
-            hadError: 1,
-            errorMessage,
-            inputTokens: null,
-            outputTokens: null,
-            completionMs: durationMs,
-            appId: app,
-            promptId: prompt.id,
-            promptName: prompt.name,
-            promptText: prompt.text,
+        if (reviewMode) {
+          await runReviewMode({
+            signal,
+            selected_text,
+            target_pid,
+            app,
+            prompt,
             model,
             provider,
-          }).catch(() => {
-            // best-effort — don't surface DB errors on top of LLM errors
+            completionId,
+            t0,
+            apiKey,
           });
+        } else {
+          await runInstantMode({
+            signal,
+            selected_text,
+            target_pid,
+            app,
+            prompt,
+            model,
+            provider,
+            completionId,
+            t0,
+            apiKey,
+          });
+        }
+
+        // Only clear the ref if this controller is still the current one
+        if (abortControllerRef.current === controller) {
+          abortControllerRef.current = null;
         }
       },
     );
@@ -169,18 +116,50 @@ export function useAICompletionListener() {
     const unlistenOutcome = listen<ReviewOutcomePayload>(
       "raypaste://review-outcome",
       async (event) => {
-        const { completionId, finalText, wasApplied } = event.payload;
+        const { completionId, finalText, wasApplied, targetPid } =
+          event.payload;
         await updateCompletionOutcome(
           completionId,
           finalText,
           wasApplied,
         ).catch(() => {});
+        // Restore focus to target app
+        await invoke("activate_app", { targetPid }).catch(() => {});
+      },
+    );
+
+    // User cancelled from review overlay during streaming
+    const unlistenStreamCancel = listen<{ targetPid: number }>(
+      "raypaste://stream-cancel",
+      async (event) => {
+        abortControllerRef.current?.abort();
+        abortControllerRef.current = null;
+        // Restore focus to target app
+        await invoke("activate_app", {
+          targetPid: event.payload.targetPid,
+        }).catch(() => {});
+      },
+    );
+
+    // User cancelled from progress overlay during instant mode
+    const unlistenInstantCancel = listen<{ targetPid: number }>(
+      "raypaste://instant-cancel",
+      async (event) => {
+        abortControllerRef.current?.abort();
+        abortControllerRef.current = null;
+        // Match review-mode cancellation behavior by returning focus to the
+        // original target app after the instant-mode overlay is dismissed.
+        await invoke("activate_app", {
+          targetPid: event.payload.targetPid,
+        }).catch(() => {});
       },
     );
 
     return () => {
       unlistenHotkey.then((fn) => fn());
       unlistenOutcome.then((fn) => fn());
+      unlistenStreamCancel.then((fn) => fn());
+      unlistenInstantCancel.then((fn) => fn());
     };
   }, []);
 }

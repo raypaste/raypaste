@@ -1,5 +1,6 @@
 import { NotificationPage } from "#/pages/NotificationPage";
 import { ReviewPage } from "#/pages/ReviewPage";
+import { ProgressPage } from "#/pages/ProgressPage";
 import { OVERLAY, parseOverlayType } from "#/lib/overlay";
 import App from "#/App";
 
@@ -8,12 +9,17 @@ const overlayType = parseOverlayType(
 );
 
 export function RenderWindow() {
-  if (overlayType === OVERLAY.review) {
-    return <ReviewPage />;
-  }
-  if (overlayType === OVERLAY.toast) {
-    return <NotificationPage />;
-  }
+  switch (overlayType) {
+    case OVERLAY.review:
+      return <ReviewPage />;
 
-  return <App />;
+    case OVERLAY.toast:
+      return <NotificationPage />;
+
+    case OVERLAY.progress:
+      return <ProgressPage />;
+
+    default:
+      return <App />;
+  }
 }
