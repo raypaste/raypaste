@@ -2,6 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { emit } from "@tauri-apps/api/event";
 import { getLLMClient } from "#/services/llm";
 import {
+  INSTANT_PROGRESS_STORAGE_KEY,
   showProgressOverlay,
   showToastOverlay,
 } from "#/services/overlayWindows";
@@ -14,21 +15,23 @@ export async function runInstantMode(p: ModeParams) {
   // briefly brings the Raypaste application to the foreground on macOS.
   await invoke("activate_app", { targetPid: p.target_pid }).catch(() => {});
 
+  localStorage.setItem(
+    INSTANT_PROGRESS_STORAGE_KEY,
+    JSON.stringify({ loading: true }),
+  );
   const progressWin = showProgressOverlay();
 
-  // Wait for the window to be created on the Rust side before streaming.
-  // new WebviewWindow() is async — on fast completions (e.g. dry run) the
-  // stream can finish before the window exists, making close() a no-op.
-  await new Promise<void>((resolve) => {
-    if (!progressWin) {
-      resolve();
-      return;
-    }
-    progressWin.once("tauri://created", () => resolve());
-    setTimeout(resolve, 2000); // safety fallback
-  });
-
   let accumulatedText = "";
+  const finishProgressOverlay = async () => {
+    localStorage.setItem(
+      INSTANT_PROGRESS_STORAGE_KEY,
+      JSON.stringify({ loading: false }),
+    );
+    if (progressWin) {
+      progressWin.close().catch(() => {});
+    }
+    await emit("raypaste://instant-done");
+  };
 
   try {
     await getLLMClient().stream(
@@ -77,18 +80,15 @@ export async function runInstantMode(p: ModeParams) {
     // Re-activate the target app before closing the overlay — when the overlay
     // window closes, macOS would otherwise focus the Raypaste main window.
     await invoke("activate_app", { targetPid: p.target_pid }).catch(() => {});
-    // Close via handle (reliable — the event-based approach has a race condition
-    // where the overlay's JS bundle may not have loaded before the event fires).
-    // Emit the event too as a fallback for when progressWin is null.
-    progressWin?.close();
-    await emit("raypaste://instant-done");
+    await finishProgressOverlay();
   } catch (err) {
     if (isAbortError(err)) {
+      await finishProgressOverlay();
       return;
     }
 
     const errorMessage = err instanceof Error ? err.message : String(err);
-    progressWin?.close();
+    await finishProgressOverlay();
     showToastOverlay(`Error: ${errorMessage}`, "error");
 
     await saveCompletion({

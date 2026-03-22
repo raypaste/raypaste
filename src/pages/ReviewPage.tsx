@@ -206,11 +206,7 @@ export function ReviewPage() {
             </svg>
           )}
           <span className="text-xs font-semibold tracking-[0.02em] text-neutral-200">
-            {isLoading
-              ? "Generating…"
-              : isError
-                ? "Error"
-                : "Review Completion"}
+            {isLoading ? "Generating…" : isError ? "Error" : "Review Response"}
           </span>
         </div>
         <div

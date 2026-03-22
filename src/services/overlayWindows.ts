@@ -75,6 +75,11 @@ export type PendingReviewStorage =
     };
 
 export const REVIEW_STORAGE_KEY = "raypaste-pending-review";
+export const INSTANT_PROGRESS_STORAGE_KEY = "raypaste-pending-instant";
+
+export interface PendingInstantProgressStorage {
+  loading: boolean;
+}
 
 /**
  * Open the review overlay window. The caller must write initial state to
