@@ -13,12 +13,17 @@ interface AppPromptComboboxProps {
   prompts: Prompt[];
   assignedPromptId: string;
   onAssign: (promptId: string) => void;
+  placeholder?: string;
+  /** When false, the clear control is hidden (e.g. URL rules must keep a prompt). */
+  showClear?: boolean;
 }
 
 export function AppPromptCombobox({
   prompts,
   assignedPromptId,
   onAssign,
+  placeholder = "No prompt",
+  showClear = true,
 }: AppPromptComboboxProps) {
   const [query, setQuery] = useState("");
 
@@ -38,9 +43,9 @@ export function AppPromptCombobox({
       onInputValueChange={setQuery}
     >
       <ComboboxInput
-        placeholder="No prompt"
+        placeholder={placeholder}
         showTrigger
-        showClear={!!assignedPromptId}
+        showClear={showClear && !!assignedPromptId}
         className="max-w-64 min-w-40"
       />
       <ComboboxContent className="min-w-56">

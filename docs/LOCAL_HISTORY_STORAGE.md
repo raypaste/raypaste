@@ -30,6 +30,7 @@ Schema changes are managed with **drizzle-kit** and applied automatically at sta
    - Reads `PRAGMA user_version` to determine how many migrations have been applied.
    - Runs each pending migration in filename order, splitting on `-->statement-breakpoint`.
    - Increments `PRAGMA user_version` after each successful migration.
+4. After migrations finish, the app ensures the singleton `usage_stats` row exists by inserting the `global` row if needed.
 
 Because the Tauri SQLite driver operates over an IPC bridge, drizzle-kit is used **only** to generate SQL — it never connects to the runtime database directly.
 
@@ -43,9 +44,33 @@ open src/services/db/schema.ts
 pnpm db:generate
 # → writes src/services/db/migrations/XXXX_<name>.sql
 
-# 3. Commit both files
+# 3. Launch the app to apply pending migrations
+pnpm tauri dev
+
+# 4. Commit both files
 git add src/services/db/schema.ts src/services/db/migrations/
 ```
+
+Migrations are **not** applied by `drizzle-kit`. They are executed automatically the next time Raypaste starts and initializes the database.
+
+### Running migrations locally
+
+To apply pending migrations during development:
+
+```bash
+pnpm tauri dev
+```
+
+On startup, the app opens `raypaste.db`, runs `runMigrations()`, applies any new SQL files, updates `PRAGMA user_version`, and ensures the `usage_stats` `global` row exists.
+
+To verify a migration from a clean slate:
+
+```bash
+rm ~/Library/Application\ Support/com.raypaste.raypaste/raypaste.db
+pnpm tauri dev
+```
+
+This recreates the database from migration 0 and reapplies the full migration set.
 
 ### Resetting the database (development)
 

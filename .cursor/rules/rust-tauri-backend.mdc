@@ -1,0 +1,43 @@
+---
+description: Rust/Tauri backend conventions for Raypaste
+globs: src-tauri/**/*.rs
+alwaysApply: false
+---
+
+# Rust backend (Tauri)
+
+## Format & lint
+
+- Format with **rustfmt** (defaults; no `rustfmt.toml` in repo): `pnpm format:rust` or `cargo fmt --manifest-path src-tauri/Cargo.toml`.
+- Prefer `cargo clippy` before large changes; fix new warnings when reasonable.
+
+## Layout
+
+- New commands go under `src-tauri/src/commands/` and are registered from `lib.rs`.
+- Keep **Tauri command handlers** thin: parse inputs, call helpers, return `Result`—avoid `unwrap()`/`expect()` on user-facing paths unless documented.
+
+## macOS / AppKit
+
+- **AppKit and Accessibility (AX) work must run on the main thread** (`run_on_main_thread` / patterns already used in this codebase). Do not call UI/AX APIs from arbitrary threads.
+
+## Errors
+
+- Return `Result<T, String>` (or a serializable error type) from `#[tauri::command]` functions; propagate with `?` where types align.
+
+## Examples
+
+```rust
+// ❌ BAD — AX from a random thread
+std::thread::spawn(|| { /* get_selected_text */ });
+
+// ✅ GOOD — dispatch to main, then do AX / NSWorkspace work
+run_on_main_thread(|| { /* ... */ });
+```
+
+```rust
+// ❌ BAD
+let x = risky_operation().unwrap();
+
+// ✅ GOOD
+let x = risky_operation().map_err(|e| e.to_string())?;
+```

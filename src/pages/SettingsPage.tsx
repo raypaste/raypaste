@@ -261,7 +261,7 @@ export function SettingsPage() {
           </ComboboxContent>
         </Combobox>
         <p className="text-muted-foreground text-xs">
-          Used when no app-specific prompt is assigned
+          Used when no website prompt or app-specific prompt applies
         </p>
       </section>
 

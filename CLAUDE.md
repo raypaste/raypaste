@@ -9,6 +9,7 @@ pnpm tauri dev        # Development (starts Vite + Tauri dev window)
 pnpm tauri build      # Production build
 pnpm lint / lint:fix  # Lint
 pnpm format           # Format (Prettier sorts Tailwind classes)
+pnpm format:rust      # Format Rust (rustfmt via src-tauri/Cargo.toml)
 pnpm check            # Lint + format together
 pnpm db:generate      # Generate migration after editing src/services/db/schema.ts
 ```
@@ -23,10 +24,10 @@ No automated tests.
 
 Hotkey **Cmd+Ctrl+R** triggers the pipeline:
 
-1. **Hotkey intercept** (Rust): `lib.rs` intercepts via `tauri_plugin_global_shortcut`, calls `commands::focused_app` + `commands::text` on the main thread, emits `raypaste://hotkey-triggered` with `{ app, selected_text, target_pid }`.
+1. **Hotkey intercept** (Rust): `lib.rs` intercepts via `tauri_plugin_global_shortcut`, calls `commands::focused_app` + `commands::text` on the main thread, then resolves the active tab URL off-thread via `commands::browser_url::try_get_active_tab_url` (AppleScript / `osascript` for supported browsers). Emits `raypaste://hotkey-triggered` with `{ app, selected_text, target_pid, page_url? }`.
 
 2. **Completion flow** (`src/hooks/useAICompletionListener.ts`):
-   - Resolves active prompt (per-app mapping → `formal` fallback → first prompt in list)
+   - Resolves active prompt (**URL rules** on `page_url`, when present → per-app mapping → `formal` fallback → first prompt). URL rules are configured under **Web rules** in the sidebar (`src/pages/url-rules/UrlRulesPage.tsx`); see `urlPromptRules` + `resolvePromptForHotkey` in `promptsStore`.
    - Creates `AbortController` for cancellation support
    - Branches to **review mode** or **instant mode**:
      - **Review mode**: Opens review overlay in loading state → streams completion chunks via `raypaste://stream-chunk` → emits `raypaste://stream-done` when complete → ReviewPage transitions to edit state
@@ -69,7 +70,10 @@ Hotkey **Cmd+Ctrl+R** triggers the pipeline:
 Zustand + `persist` (localStorage), all re-exported from `src/stores/index.ts`:
 
 - `settingsStore` — LLM mode (`"direct"` | `"api"`), provider (`"openrouter"` | `"cerebras"`), API keys, model, `reviewMode`, `themeMode` (`"light"` | `"dark"` | `"auto"`)
-- `promptsStore` — CRUD; each prompt has `appIds[]`. App assignments are **exclusive** — `assignAppToPrompt` removes the app from all other prompts.
+- `promptsStore` — CRUD; each prompt has `appIds[]`. App assignments are **exclusive** — `assignAppToPrompt` removes the app from all other prompts. **Web rules** (`urlPromptRules`): ordered host-suffix or URL-prefix patterns that pick a prompt when the hotkey fires in a browser and `page_url` matches (first match wins).
+
+**Browser URL for web rules (macOS):** Implemented in `commands/browser_url.rs`. Uses AppleScript for Chrome (incl. Canary), Brave, Edge, Opera, Safari, and Arc. **Automation** permission may be required (System Settings → Privacy & Security → Automation). **Firefox** is not supported (no reliable URL via scripting). If URL lookup fails, Raypaste falls back to per-app prompt selection only.
+
 - `appsStore` — macOS installed apps list (via `commands::apps::list_apps`)
 
 ### LLM service layer
@@ -98,9 +102,10 @@ Schema: `src/services/db/schema.ts`. `src/services/db/index.ts` exports:
 
 ### Rust commands
 
-`src-tauri/src/commands/` — three modules:
+`src-tauri/src/commands/` — modules:
 
 - `apps::list_apps` / `get_icon_base64` / `get_icon_base64_for_icns`
+- `browser_url::try_get_active_tab_url` — optional active tab URL via `osascript` (see Web rules)
 - `focused_app::get_focused_app` / `get_frontmost_pid` — NSWorkspace/NSRunningApplication (ObjC2) bundle ID + PID
 - `focused_app::activate_app` — re-activates a target app by PID (used in instant mode to return focus)
 - `text::get_selected_text` / `write_text_back` — AX read/write

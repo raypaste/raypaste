@@ -11,6 +11,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"*.{js,ts,json}\"",
+    "format:rust": "cargo fmt --manifest-path src-tauri/Cargo.toml",
     "check": "pnpm run lint && pnpm run format",
     "db:generate": "drizzle-kit generate"
   },

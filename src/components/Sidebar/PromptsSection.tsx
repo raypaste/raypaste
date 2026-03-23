@@ -9,17 +9,26 @@ import { cn } from "#/lib/utils";
 import { usePromptsStore, useAppsStore } from "#/stores";
 import type { Page } from "./SidebarNav";
 import { useAppIcons } from "#/hooks/useAppIcons";
+import { WebsitePromptSiteIcon } from "#/components/website-prompts/WebsitePromptSiteIcon";
 
 interface PromptsSectionProps {
+  activePage: Page;
   selectedPromptId: string | null;
-  onNavigate: (page: Page, promptId?: string) => void;
+  selectedWebsitePromptSiteId: string | null;
+  onNavigate: (
+    page: Page,
+    promptId?: string,
+    websitePromptSiteId?: string,
+  ) => void;
 }
 
 export function PromptsSection({
+  activePage,
   selectedPromptId,
+  selectedWebsitePromptSiteId,
   onNavigate,
 }: PromptsSectionProps) {
-  const { prompts, defaultPromptId } = usePromptsStore();
+  const { prompts, defaultPromptId, websitePromptSites } = usePromptsStore();
   const { apps } = useAppsStore();
 
   // App groups: prompts assigned to specific apps
@@ -55,7 +64,7 @@ export function PromptsSection({
   // Ungrouped: prompts with no app assignments
   const ungroupedPrompts = prompts.filter((p) => p.appIds.length === 0);
 
-  if (prompts.length === 0) return null;
+  if (prompts.length === 0 && websitePromptSites.length === 0) return null;
 
   function PromptItem({ id, name }: { id: string; name: string }) {
     const isSelected = selectedPromptId === id;
@@ -72,7 +81,7 @@ export function PromptsSection({
       >
         <span className="flex-1 truncate">{name}</span>
         {isDefault && (
-          <Star className="fill-primary text-primary h-3 w-3 shrink-0" />
+          <Star className="fill-primary text-primary mr-1.5 h-2.5 w-2.5 shrink-0" />
         )}
       </button>
     );
@@ -155,6 +164,49 @@ export function PromptsSection({
           </Collapsible>
         )}
       </div>
+
+      {websitePromptSites.length > 0 && (
+        <div className="mt-4">
+          <p className="text-muted-foreground mb-1 px-3 text-xs font-semibold tracking-wider uppercase select-none">
+            Website prompts
+          </p>
+          <div className="space-y-0.5">
+            {websitePromptSites.map((site) => {
+              const isSelected =
+                activePage === "website-prompts" &&
+                selectedWebsitePromptSiteId === site.id;
+              return (
+                <button
+                  key={site.id}
+                  onClick={() =>
+                    onNavigate("website-prompts", undefined, site.id)
+                  }
+                  className={cn(
+                    "flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-[13px] transition-colors",
+                    isSelected
+                      ? "bg-secondary text-foreground"
+                      : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+                  )}
+                >
+                  <WebsitePromptSiteIcon
+                    iconSrc={site.iconSrc}
+                    iconStatus={site.iconStatus}
+                    domain={site.domain}
+                    className="h-6 w-6 rounded-md border-none bg-transparent shadow-none"
+                    iconClassName="h-4 w-4"
+                  />
+                  <span className="flex-1 truncate">
+                    {site.domain || "New website"}
+                  </span>
+                  <span className="bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 text-[10px] leading-none">
+                    {site.rules.length}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

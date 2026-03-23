@@ -13,6 +13,7 @@ interface HotkeyPayload {
   app: string;
   selected_text: string;
   target_pid: number;
+  page_url?: string | null;
 }
 
 interface ReviewOutcomePayload {
@@ -22,14 +23,27 @@ interface ReviewOutcomePayload {
   targetPid: number;
 }
 
+const BROWSER_APP_IDS = new Set([
+  "com.apple.Safari",
+  "company.thebrowser.Browser",
+  "com.google.Chrome",
+  "com.google.Chrome.canary",
+  "com.brave.Browser",
+  "com.microsoft.edgemac",
+  "com.operasoftware.Opera",
+  "org.mozilla.firefox",
+  "org.mozilla.firefoxdeveloperedition",
+]);
+
 export function useAICompletionListener() {
   const abortControllerRef = useRef<AbortController | null>(null);
+  const websitePromptHintedAppsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     const unlistenHotkey = listen<HotkeyPayload>(
       "raypaste://hotkey-triggered",
       async (event) => {
-        const { app, selected_text, target_pid } = event.payload;
+        const { app, selected_text, target_pid, page_url } = event.payload;
 
         if (!selected_text.trim()) {
           showToastOverlay(
@@ -40,17 +54,28 @@ export function useAICompletionListener() {
         }
 
         const promptsState = usePromptsStore.getState();
-        const prompt =
-          promptsState.getPromptForApp(app) ??
-          promptsState.prompts.find((p) => p.id === "formal") ??
-          promptsState.prompts[0];
+        const resolution = promptsState.resolvePromptForHotkey(app, page_url);
 
-        if (!prompt) {
+        if (!resolution) {
           showToastOverlay(
             "No prompt configured. Create one in New Prompt.",
             "error",
           );
           return;
+        }
+
+        if (
+          promptsState.websitePromptSites.length > 0 &&
+          !page_url &&
+          BROWSER_APP_IDS.has(app) &&
+          !websitePromptHintedAppsRef.current.has(app)
+        ) {
+          websitePromptHintedAppsRef.current.add(app);
+          showToastOverlay(
+            "Website prompts were unavailable for this tab, so Raypaste used your usual fallback prompt.",
+            "info",
+            4200,
+          );
         }
 
         const apiKey = getApiKey();
@@ -84,7 +109,10 @@ export function useAICompletionListener() {
             selected_text,
             target_pid,
             app,
-            prompt,
+            prompt: resolution.prompt,
+            promptSource: resolution.source,
+            pageUrl: resolution.pageUrl,
+            matchedWebsitePattern: resolution.matchedWebsitePattern,
             model,
             provider,
             completionId,
@@ -97,7 +125,10 @@ export function useAICompletionListener() {
             selected_text,
             target_pid,
             app,
-            prompt,
+            prompt: resolution.prompt,
+            promptSource: resolution.source,
+            pageUrl: resolution.pageUrl,
+            matchedWebsitePattern: resolution.matchedWebsitePattern,
             model,
             provider,
             completionId,

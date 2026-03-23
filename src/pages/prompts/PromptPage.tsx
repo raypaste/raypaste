@@ -18,6 +18,7 @@ export function PromptPage({ promptId, onDeleted }: PromptPageProps) {
     unassignApp,
     defaultPromptId,
     setDefaultPrompt,
+    websitePromptSites,
   } = usePromptsStore();
   const prompt = prompts.find((p) => p.id === promptId);
 
@@ -30,6 +31,14 @@ export function PromptPage({ promptId, onDeleted }: PromptPageProps) {
   if (!prompt) return null;
 
   const isDefault = defaultPromptId === promptId;
+  const websiteRules = websitePromptSites.flatMap((site) =>
+    site.rules
+      .filter((rule) => rule.promptId === promptId)
+      .map((rule) => ({
+        id: rule.id,
+        pattern: rule.kind === "site" ? site.domain : rule.value,
+      })),
+  );
 
   function handleSave() {
     if (!name.trim() || !text.trim()) return;
@@ -148,6 +157,28 @@ export function PromptPage({ promptId, onDeleted }: PromptPageProps) {
             removed.forEach((id) => unassignApp(id));
           }}
         />
+
+        <div className="space-y-2">
+          <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+            Website prompts using this prompt
+          </p>
+          {websiteRules.length === 0 ? (
+            <p className="text-muted-foreground text-sm">
+              This prompt is not currently used by any website prompt.
+            </p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {websiteRules.map((rule) => (
+                <span
+                  key={rule.id}
+                  className="border-border bg-muted/30 text-foreground rounded-full border px-2.5 py-1 text-xs"
+                >
+                  {rule.pattern || "Untitled website prompt"}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
 
         <div>
           <button

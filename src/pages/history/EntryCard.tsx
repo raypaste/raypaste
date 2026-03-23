@@ -13,6 +13,16 @@ interface EntryCardProps {
 export function EntryCard({ row, appName, onClick, onDelete }: EntryCardProps) {
   const name = appName(row.appId);
   const initial = name.charAt(0).toUpperCase();
+  const promptSourceLabel =
+    row.promptSource === "website"
+      ? "Website"
+      : row.promptSource === "app"
+        ? "App"
+        : row.promptSource === "default"
+          ? "Default"
+          : row.promptSource === "builtin"
+            ? "Built-in"
+            : null;
 
   return (
     <button
@@ -54,6 +64,19 @@ export function EntryCard({ row, appName, onClick, onDelete }: EntryCardProps) {
       <p className="text-foreground mb-0.5 text-[13px] leading-snug font-semibold">
         {row.promptName}
       </p>
+
+      <div className="mb-1 flex flex-wrap items-center gap-1.5">
+        {promptSourceLabel && (
+          <span className="bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 text-[10px]">
+            {promptSourceLabel} prompt
+          </span>
+        )}
+        {row.matchedWebsitePattern && (
+          <span className="bg-primary/10 text-primary rounded-full px-1.5 py-0.5 text-[10px]">
+            {row.matchedWebsitePattern}
+          </span>
+        )}
+      </div>
 
       {/* Input preview */}
       <p className="text-muted-foreground line-clamp-2 text-[11px] leading-relaxed">

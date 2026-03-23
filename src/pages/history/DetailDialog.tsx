@@ -18,6 +18,16 @@ export function DetailDialog({ row, onClose, appName }: DetailDialogProps) {
     !!row?.isReviewMode &&
     row.finalText !== null &&
     row.finalText !== row.outputText;
+  const promptSourceLabel =
+    row?.promptSource === "website"
+      ? "Website prompt"
+      : row?.promptSource === "app"
+        ? "App prompt"
+        : row?.promptSource === "default"
+          ? "Default prompt"
+          : row?.promptSource === "builtin"
+            ? "Built-in prompt"
+            : null;
 
   return (
     <Dialog open={row !== null} onOpenChange={(open) => !open && onClose()}>
@@ -33,6 +43,12 @@ export function DetailDialog({ row, onClose, appName }: DetailDialogProps) {
               <span>{appName(row.appId)}</span>
               <span>·</span>
               <span>{row.promptName}</span>
+              {promptSourceLabel && (
+                <>
+                  <span>·</span>
+                  <span>{promptSourceLabel}</span>
+                </>
+              )}
               <span>·</span>
               <span>{timeAgo(row.timestamp)}</span>
               {row.completionMs > 0 && (
@@ -54,6 +70,24 @@ export function DetailDialog({ row, onClose, appName }: DetailDialogProps) {
               <span>·</span>
               <span className="font-mono">{row.model}</span>
             </div>
+
+            {(row.pageUrl || row.matchedWebsitePattern) && (
+              <div className="border-border bg-muted/20 rounded-lg border px-3 py-2 text-[11px]">
+                {row.matchedWebsitePattern && (
+                  <p className="text-foreground">
+                    Matched website prompt:{" "}
+                    <span className="font-mono">
+                      {row.matchedWebsitePattern}
+                    </span>
+                  </p>
+                )}
+                {row.pageUrl && (
+                  <p className="text-muted-foreground mt-1 break-all">
+                    Page: {row.pageUrl}
+                  </p>
+                )}
+              </div>
+            )}
 
             <div className="grid min-h-0 flex-1 grid-cols-2 gap-3 overflow-hidden">
               <div className="flex flex-col overflow-hidden">

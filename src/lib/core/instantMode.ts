@@ -75,6 +75,9 @@ export async function runInstantMode(p: ModeParams) {
       promptId: p.prompt.id,
       promptName: p.prompt.name,
       promptText: p.prompt.text,
+      promptSource: p.promptSource,
+      pageUrl: p.pageUrl,
+      matchedWebsitePattern: p.matchedWebsitePattern,
       model: p.model,
       provider: p.provider,
     });
@@ -110,6 +113,9 @@ export async function runInstantMode(p: ModeParams) {
       promptId: p.prompt.id,
       promptName: p.prompt.name,
       promptText: p.prompt.text,
+      promptSource: p.promptSource,
+      pageUrl: p.pageUrl,
+      matchedWebsitePattern: p.matchedWebsitePattern,
       model: p.model,
       provider: p.provider,
     }).catch(() => {});
