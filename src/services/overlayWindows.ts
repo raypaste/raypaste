@@ -128,7 +128,9 @@ export function showProgressOverlay(): WebviewWindow | null {
       shadow: false,
       alwaysOnTop: true,
       skipTaskbar: true,
-      focus: false,
+      // Match review overlay: without focus, macOS can activate Raypaste but
+      // leave keyboard focus on the main window instead of this overlay.
+      focus: true,
       x,
       y,
     });
