@@ -10,10 +10,17 @@ export interface LLMMessage {
   content: string;
 }
 
+/** Passed only for dry-run output labeling; stripped before real API calls. */
+export interface LLMDryRunMetadata {
+  promptName: string;
+  pageUrl?: string | null;
+}
+
 export interface LLMRequest {
   messages: LLMMessage[];
   model: string;
   stream?: boolean;
+  dryRunMetadata?: LLMDryRunMetadata;
 }
 
 export interface LLMUsage {

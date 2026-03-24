@@ -6,12 +6,18 @@ import { PromptsSection } from "./PromptsSection";
 interface SidebarProps {
   activePage: Page;
   selectedPromptId: string | null;
-  onNavigate: (page: Page, promptId?: string) => void;
+  selectedWebsitePromptSiteId: string | null;
+  onNavigate: (
+    page: Page,
+    promptId?: string,
+    websitePromptSiteId?: string,
+  ) => void;
 }
 
 export function Sidebar({
   activePage,
   selectedPromptId,
+  selectedWebsitePromptSiteId,
   onNavigate,
 }: SidebarProps) {
   return (
@@ -23,7 +29,9 @@ export function Sidebar({
       <div className="flex-1 space-y-4 overflow-y-auto px-2 pb-4">
         <SidebarNav activePage={activePage} onNavigate={onNavigate} />
         <PromptsSection
+          activePage={activePage}
           selectedPromptId={selectedPromptId}
+          selectedWebsitePromptSiteId={selectedWebsitePromptSiteId}
           onNavigate={onNavigate}
         />
       </div>

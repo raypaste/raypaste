@@ -16,7 +16,10 @@ export function NewPromptPage({ onCreated }: NewPromptPageProps) {
   const [selectedAppIds, setSelectedAppIds] = useState<string[]>([]);
 
   function handleSave() {
-    if (!name.trim() || !text.trim()) return;
+    if (!name.trim() || !text.trim()) {
+      return;
+    }
+
     const id = crypto.randomUUID();
     addPrompt({
       id,

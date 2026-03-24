@@ -1,6 +1,6 @@
 [package]
 name = "Raypaste"
-version = "0.2.1"
+version = "0.3.0"
 description = "An app for fast, and customizable AI completions anywhere on your computer."
 authors = ["Winston Hsiao"]
 edition = "2021"
@@ -30,4 +30,6 @@ objc2-app-kit = { version = "0.2", features = ["NSWorkspace", "NSRunningApplicat
 core-graphics = { version = "0.23", features = ["highsierra"] }
 tauri-plugin-sql = { version = "2", features = ["sqlite"] }
 base64 = "0.22"
-
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "gzip", "brotli", "deflate", "charset"] }
+regex = "1"
+url = "2"

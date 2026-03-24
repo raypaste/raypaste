@@ -98,11 +98,7 @@ pub fn get_selected_text(target_pid: i32) -> Option<String> {
 
 /// Writes text back to the frontmost app by placing it on the clipboard and simulating Cmd+V.
 #[tauri::command]
-pub fn write_text_back(
-    app: tauri::AppHandle,
-    text: String,
-    target_pid: i32,
-) -> Result<(), String> {
+pub fn write_text_back(app: tauri::AppHandle, text: String, target_pid: i32) -> Result<(), String> {
     let (tx, rx) = std::sync::mpsc::channel();
 
     app.run_on_main_thread(move || {

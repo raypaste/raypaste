@@ -19,12 +19,16 @@ export function NotificationPage() {
   const win = getCurrentWebviewWindow();
 
   useEffect(() => {
-    if (overlay !== OVERLAY.toast) return;
+    if (overlay !== OVERLAY.toast) {
+      return;
+    }
 
     const timer = setTimeout(() => win.close(), duration);
 
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") win.close();
+      if (e.key === "Escape") {
+        win.close();
+      }
     };
     window.addEventListener("keydown", onKey);
 

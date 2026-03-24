@@ -17,6 +17,9 @@ export const completions = sqliteTable("completions", {
   promptId: text("prompt_id").notNull(),
   promptName: text("prompt_name").notNull(),
   promptText: text("prompt_text").notNull(),
+  promptSource: text("prompt_source"),
+  pageUrl: text("page_url"),
+  matchedWebsitePattern: text("matched_website_pattern"),
   model: text("model").notNull(),
   provider: text("provider").notNull(),
 });

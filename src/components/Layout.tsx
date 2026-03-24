@@ -8,6 +8,7 @@ import { NewPromptPage } from "#/pages/prompts/NewPromptPage";
 import { PromptPage } from "#/pages/prompts/PromptPage";
 import { AppsPage } from "#/pages/apps/AppsPage";
 import { HistoryPage } from "#/pages/history/HistoryPage";
+import { WebsitePromptsPage } from "#/pages/website-prompts/WebsitePromptsPage";
 import { SettingsPage } from "#/pages/SettingsPage";
 import { usePromptsStore, useAppsStore } from "#/stores";
 import type { InstalledApp } from "#/stores";
@@ -16,11 +17,15 @@ import { useAICompletionListener } from "#/hooks/useAICompletionListener";
 export function Layout() {
   const [activePage, setActivePage] = useState<Page>("new-prompt");
   const [selectedPromptId, setSelectedPromptId] = useState<string | null>(null);
+  const [selectedWebsitePromptSiteId, setSelectedWebsitePromptSiteId] =
+    useState<string | null>(null);
   const { prompts } = usePromptsStore();
   const { apps, setApps } = useAppsStore();
 
   useEffect(() => {
-    if (apps.length > 0) return;
+    if (apps.length > 0) {
+      return;
+    }
     invoke<InstalledApp[]>("list_apps")
       .then(setApps)
       .catch(() => {});
@@ -29,14 +34,25 @@ export function Layout() {
 
   useAICompletionListener();
 
-  function handleNavigate(page: Page, promptId?: string) {
+  function handleNavigate(
+    page: Page,
+    promptId?: string,
+    websitePromptSiteId?: string,
+  ) {
     setActivePage(page);
     if (page === "prompt") {
       if (promptId !== undefined) {
         setSelectedPromptId(promptId);
       }
+      setSelectedWebsitePromptSiteId(null);
+    } else if (page === "website-prompts") {
+      setSelectedPromptId(null);
+      if (websitePromptSiteId !== undefined) {
+        setSelectedWebsitePromptSiteId(websitePromptSiteId);
+      }
     } else {
       setSelectedPromptId(null);
+      setSelectedWebsitePromptSiteId(null);
     }
   }
 
@@ -50,6 +66,7 @@ export function Layout() {
       <Sidebar
         activePage={activePage}
         selectedPromptId={selectedPromptId}
+        selectedWebsitePromptSiteId={selectedWebsitePromptSiteId}
         onNavigate={handleNavigate}
       />
       <main className="bg-background flex flex-1 flex-col overflow-hidden">
@@ -71,6 +88,12 @@ export function Layout() {
             />
           )}
           {activePage === "apps" && <AppsPage />}
+          {activePage === "website-prompts" && (
+            <WebsitePromptsPage
+              selectedSiteId={selectedWebsitePromptSiteId}
+              onSelectSite={setSelectedWebsitePromptSiteId}
+            />
+          )}
           {activePage === "history" && <HistoryPage />}
           {activePage === "settings" && <SettingsPage />}
         </div>
@@ -88,5 +111,8 @@ function getPageTitle(page: Page, promptName: string | undefined): string {
     return "New Prompt";
   }
 
+  if (page === "website-prompts") {
+    return "Website prompts";
+  }
   return page.replace(/-/g, " ");
 }

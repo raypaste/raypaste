@@ -20,7 +20,9 @@ function App() {
 
     apply(themeMode);
 
-    if (themeMode !== "auto") return;
+    if (themeMode !== "auto") {
+      return;
+    }
 
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     const onChange = () => apply("auto");

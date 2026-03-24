@@ -94,6 +94,9 @@ export async function saveCompletion(entry: CompletionEntry): Promise<void> {
     promptId: entry.promptId,
     promptName: entry.promptName,
     promptText: entry.promptText,
+    promptSource: entry.promptSource,
+    pageUrl: entry.pageUrl,
+    matchedWebsitePattern: entry.matchedWebsitePattern,
     model: entry.model,
     provider: entry.provider,
   });
@@ -104,7 +107,9 @@ export async function saveCompletion(entry: CompletionEntry): Promise<void> {
     .from(usageStats)
     .where(eq(usageStats.id, "global"));
   const stats = statsRows[0];
-  if (!stats) return;
+  if (!stats) {
+    return;
+  }
 
   const promptStatsMap = JSON.parse(stats.promptStats) as Record<
     string,
@@ -158,7 +163,9 @@ export async function updateCompletionOutcome(
       .from(usageStats)
       .where(eq(usageStats.id, "global"));
     const stats = statsRows[0];
-    if (!stats) return;
+    if (!stats) {
+      return;
+    }
     await db
       .update(usageStats)
       .set({ totalApplied: stats.totalApplied + 1 })
@@ -182,6 +189,8 @@ export async function listCompletions(
           like(completions.inputText, pattern),
           like(completions.promptName, pattern),
           like(completions.appId, pattern),
+          like(completions.pageUrl, pattern),
+          like(completions.matchedWebsitePattern, pattern),
         ),
       )
       .orderBy(desc(completions.timestamp))

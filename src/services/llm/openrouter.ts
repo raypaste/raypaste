@@ -1,4 +1,5 @@
 import type { LLMClient, LLMCompletion, LLMRequest } from "./types";
+import { chatCompletionBody } from "./chatCompletionBody";
 
 const BASE_URL = "https://openrouter.ai/api/v1/chat/completions";
 const EXTRA_HEADERS = {
@@ -24,7 +25,10 @@ async function parseSSEStream(
     buffer = lines.pop() ?? "";
 
     for (const line of lines) {
-      if (!line.startsWith("data:")) continue;
+      if (!line.startsWith("data:")) {
+        continue;
+      }
+
       const raw = line.slice(5).trim();
       if (raw === "[DONE]") {
         break;
@@ -56,7 +60,7 @@ export const openrouterClient: LLMClient = {
         Authorization: `Bearer ${apiKey}`,
         ...EXTRA_HEADERS,
       },
-      body: JSON.stringify({ ...req, stream: false }),
+      body: JSON.stringify(chatCompletionBody(req, false)),
       signal,
     });
     if (!res.ok) throw new Error(`OpenRouter error: ${res.status}`);
@@ -88,7 +92,7 @@ export const openrouterClient: LLMClient = {
         Authorization: `Bearer ${apiKey}`,
         ...EXTRA_HEADERS,
       },
-      body: JSON.stringify({ ...req, stream: true }),
+      body: JSON.stringify(chatCompletionBody(req, true)),
       signal,
     });
     if (!res.ok) {

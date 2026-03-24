@@ -1,8 +1,8 @@
-use serde::{Serialize, Deserialize};
+use base64::{engine::general_purpose::STANDARD, Engine as _};
+use serde::{Deserialize, Serialize};
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 use std::time::{SystemTime, UNIX_EPOCH};
-use base64::{Engine as _, engine::general_purpose::STANDARD};
 
 #[derive(Debug, Deserialize)]
 pub struct GetIconRequest {
@@ -71,7 +71,12 @@ pub async fn list_apps() -> Vec<InstalledApp> {
                             .to_string()
                     });
                 let (icon_path, icns_path) = resolve_icon_paths(&path, dict, &cache_dir);
-                apps.push(InstalledApp { name, bundle_id, icon_path, icns_path });
+                apps.push(InstalledApp {
+                    name,
+                    bundle_id,
+                    icon_path,
+                    icns_path,
+                });
             }
         }
 
@@ -131,10 +136,7 @@ fn resolve_icon_paths(
 /// OS temp-file cleanup between app restarts.
 fn get_icon_cache_dir() -> std::path::PathBuf {
     let home = std::env::var("HOME").unwrap_or_default();
-    let cache_dir = std::path::PathBuf::from(format!(
-        "{}/Library/Caches/raypaste/icons",
-        home
-    ));
+    let cache_dir = std::path::PathBuf::from(format!("{}/Library/Caches/raypaste/icons", home));
     if !cache_dir.exists() {
         let _ = std::fs::create_dir_all(&cache_dir);
     }
@@ -163,10 +165,15 @@ fn icns_to_png_path(icns_path: &str, cache_dir: &std::path::Path) -> Option<Stri
 
     let sips_ok = std::process::Command::new("sips")
         .args([
-            "-s", "format", "png",
-            "--resampleHeightWidth", "64", "64",
+            "-s",
+            "format",
+            "png",
+            "--resampleHeightWidth",
+            "64",
+            "64",
             icns_path,
-            "--out", temp_path.to_str()?,
+            "--out",
+            temp_path.to_str()?,
         ])
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null())
@@ -211,7 +218,13 @@ fn icns_to_png_via_iconutil(
     let _ = std::fs::remove_dir_all(&iconset_dir);
 
     let ok = std::process::Command::new("iconutil")
-        .args(["-c", "iconset", icns_path, "-o", &iconset_dir.to_string_lossy()])
+        .args([
+            "-c",
+            "iconset",
+            icns_path,
+            "-o",
+            &iconset_dir.to_string_lossy(),
+        ])
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null())
         .status()

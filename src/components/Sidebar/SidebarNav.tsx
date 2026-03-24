@@ -1,7 +1,13 @@
-import { LayoutGrid, BookOpen, SquarePen } from "lucide-react";
+import { LayoutGrid, BookOpen, SquarePen, Globe } from "lucide-react";
 import { cn } from "#/lib/utils";
 
-export type Page = "new-prompt" | "apps" | "history" | "settings" | "prompt";
+export type Page =
+  | "new-prompt"
+  | "apps"
+  | "website-prompts"
+  | "history"
+  | "settings"
+  | "prompt";
 
 interface NavItem {
   id: Page;
@@ -12,6 +18,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { id: "new-prompt", label: "New Prompt", icon: SquarePen },
   { id: "apps", label: "Apps", icon: LayoutGrid },
+  { id: "website-prompts", label: "Website prompts", icon: Globe },
   { id: "history", label: "History", icon: BookOpen },
 ];
 

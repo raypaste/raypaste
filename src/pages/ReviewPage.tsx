@@ -10,7 +10,9 @@ import {
 
 function loadStorage(): PendingReviewStorage | null {
   const raw = localStorage.getItem(REVIEW_STORAGE_KEY);
-  if (!raw) return null;
+  if (!raw) {
+    return null;
+  }
   try {
     return JSON.parse(raw) as PendingReviewStorage;
   } catch {
@@ -51,7 +53,10 @@ export function ReviewPage() {
   );
   const [originalText] = useState(initial ? initial.originalText : "");
   const [phase, setPhase] = useState<Phase>(() => {
-    if (!initial) return { kind: "error", message: "No pending review found." };
+    if (!initial) {
+      return { kind: "error", message: "No pending review found." };
+    }
+
     if (initial.loading === false) {
       return {
         kind: "ready",
@@ -61,6 +66,7 @@ export function ReviewPage() {
         originalText: initial.originalText,
       };
     }
+
     return { kind: "loading" };
   });
   const [applied, setApplied] = useState(false);
@@ -82,7 +88,9 @@ export function ReviewPage() {
 
     const unlistenDone = listen("raypaste://stream-done", () => {
       const stored = loadStorage();
-      if (!stored || stored.loading !== false) return;
+      if (!stored || stored.loading !== false) {
+        return;
+      }
       setPhase({
         kind: "ready",
         completionId: stored.completionId,
@@ -114,7 +122,9 @@ export function ReviewPage() {
   }, [win]);
 
   const handleApply = useCallback(async () => {
-    if (phase.kind !== "ready" || applied) return;
+    if (phase.kind !== "ready" || applied) {
+      return;
+    }
     setApplied(true);
     try {
       await invoke("write_text_back", { text, targetPid: phase.targetPid });
@@ -161,7 +171,9 @@ export function ReviewPage() {
           handleDismiss();
         }
       }
-      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleApply();
+      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+        handleApply();
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
