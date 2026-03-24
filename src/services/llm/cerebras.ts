@@ -3,6 +3,26 @@ import { chatCompletionBody } from "./chatCompletionBody";
 
 const BASE_URL = "https://api.cerebras.ai/v1/chat/completions";
 
+/**
+ * Settings UI uses OpenRouter-style model ids. Cerebras Inference API expects
+ * its own ids (see https://inference-docs.cerebras.ai/models/overview).
+ */
+function toCerebrasModelId(model: string): string {
+  switch (model) {
+    case "meta-llama/llama-3.1-8b-instruct":
+      return "llama3.1-8b";
+    case "openai/gpt-oss-120b":
+      return "gpt-oss-120b";
+    default:
+      return model;
+  }
+}
+
+function cerebrasRequestBody(req: LLMRequest, stream: boolean) {
+  const base = chatCompletionBody(req, stream);
+  return { ...base, model: toCerebrasModelId(base.model) };
+}
+
 async function parseSSEStream(
   body: ReadableStream<Uint8Array>,
   onChunk: (text: string) => void,
@@ -54,7 +74,7 @@ export const cerebrasClient: LLMClient = {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify(chatCompletionBody(req, false)),
+      body: JSON.stringify(cerebrasRequestBody(req, false)),
       signal,
     });
     if (!res.ok) {
@@ -86,7 +106,7 @@ export const cerebrasClient: LLMClient = {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify(chatCompletionBody(req, true)),
+      body: JSON.stringify(cerebrasRequestBody(req, true)),
       signal,
     });
     if (!res.ok) {
