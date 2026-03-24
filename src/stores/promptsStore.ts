@@ -33,12 +33,6 @@ export interface WebsitePromptSite {
   rules: WebsitePromptSiteRule[];
 }
 
-interface LegacyWebsitePromptRule {
-  id: string;
-  pattern: string;
-  promptId: string;
-}
-
 export interface PromptResolution {
   prompt: Prompt;
   source: PromptSource;
@@ -48,7 +42,9 @@ export interface PromptResolution {
 
 function normalizeDomainInput(input: string): string {
   const trimmed = input.trim().toLowerCase();
-  if (!trimmed) return "";
+  if (!trimmed) {
+    return "";
+  }
 
   const candidate = /^[a-z]+:\/\//.test(trimmed)
     ? trimmed
@@ -56,7 +52,9 @@ function normalizeDomainInput(input: string): string {
 
   try {
     const url = new URL(candidate);
-    return url.hostname.replace(/\.+$/, "");
+    const normalizedURL = url.hostname.replace(/\.+$/, "");
+
+    return normalizedURL;
   } catch {
     return "";
   }
@@ -64,17 +62,25 @@ function normalizeDomainInput(input: string): string {
 
 function normalizePathPrefixInput(input: string, domain: string): string {
   const trimmed = input.trim();
-  if (!trimmed) return "";
+  if (!trimmed) {
+    return "";
+  }
 
   try {
     const url = new URL(trimmed);
     const normalizedDomain = normalizeDomainInput(domain);
-    if (!normalizedDomain) return "";
+    if (!normalizedDomain) {
+      return "";
+    }
+
     const hostname = url.hostname.toLowerCase().replace(/\.+$/, "");
     const matchesDomain =
       hostname === normalizedDomain ||
       hostname.endsWith(`.${normalizedDomain}`);
-    if (!matchesDomain) return "";
+    if (!matchesDomain) {
+      return "";
+    }
+
     return url.toString().replace(/\/$/, "");
   } catch {
     return "";
@@ -83,7 +89,10 @@ function normalizePathPrefixInput(input: string, domain: string): string {
 
 function extractDomainFromPattern(pattern: string): string {
   const trimmed = pattern.trim();
-  if (!trimmed) return "";
+  if (!trimmed) {
+    return "";
+  }
+
   if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
     try {
       return new URL(trimmed).hostname.toLowerCase().replace(/\.+$/, "");
@@ -99,7 +108,9 @@ function toStoredRuleValue(
   value: string,
   domain: string,
 ): string {
-  if (kind === "site") return "";
+  if (kind === "site") {
+    return "";
+  }
   return normalizePathPrefixInput(value, domain);
 }
 
@@ -147,44 +158,6 @@ function normalizeWebsitePromptSite(
     iconStatus: site.iconStatus ?? "idle",
     rules,
   };
-}
-
-function groupLegacyRules(
-  rules: LegacyWebsitePromptRule[] | undefined,
-): WebsitePromptSite[] {
-  if (!rules?.length) return [];
-
-  const sitesByDomain = new Map<string, WebsitePromptSite>();
-  for (const rule of rules) {
-    const domain = extractDomainFromPattern(rule.pattern);
-    if (!domain) continue;
-
-    const existing = sitesByDomain.get(domain) ?? {
-      id: crypto.randomUUID(),
-      domain,
-      iconSrc: null,
-      iconStatus: "idle" as const,
-      rules: [],
-    };
-
-    const kind =
-      rule.pattern.startsWith("http://") || rule.pattern.startsWith("https://")
-        ? "path-prefix"
-        : "site";
-
-    existing.rules.push({
-      id: rule.id ?? crypto.randomUUID(),
-      kind,
-      value: kind === "path-prefix" ? rule.pattern.trim() : "",
-      promptId: rule.promptId.trim(),
-      label: "",
-    });
-    sitesByDomain.set(domain, existing);
-  }
-
-  return Array.from(sitesByDomain.values()).map(
-    (site) => normalizeWebsitePromptSite(site) ?? site,
-  );
 }
 
 function domainMatches(pageHost: string, siteDomain: string): boolean {
@@ -285,7 +258,6 @@ interface PromptsState {
 }
 
 type PersistedPromptsState = Partial<PromptsState> & {
-  websitePromptRules?: LegacyWebsitePromptRule[];
   websitePromptSites?: WebsitePromptSite[];
 };
 
@@ -435,9 +407,15 @@ export const usePromptsStore = create<PromptsState>()(
       updateWebsitePromptSiteRule: (siteId, ruleId, updates) =>
         set((state) => ({
           websitePromptSites: state.websitePromptSites.map((site) => {
-            if (site.id !== siteId) return site;
+            if (site.id !== siteId) {
+              return site;
+            }
+
             const rules = site.rules.map((rule) => {
-              if (rule.id !== ruleId) return rule;
+              if (rule.id !== ruleId) {
+                return rule;
+              }
+
               const nextKind = updates.kind ?? rule.kind;
               return {
                 ...rule,
@@ -458,6 +436,7 @@ export const usePromptsStore = create<PromptsState>()(
                     : rule.value,
               };
             });
+
             return { ...site, rules: sortWebsitePromptRules(rules) };
           }),
         })),
@@ -476,7 +455,9 @@ export const usePromptsStore = create<PromptsState>()(
         const site = get().websitePromptSites.find(
           (item) => item.id === siteId,
         );
-        if (!site?.domain || !fetcher) return;
+        if (!site?.domain || !fetcher) {
+          return;
+        }
 
         set((state) => ({
           websitePromptSites: state.websitePromptSites.map((item) =>
@@ -563,9 +544,7 @@ export const usePromptsStore = create<PromptsState>()(
       merge: (persisted, current) => {
         const p = (persisted as PersistedPromptsState | undefined) ?? {};
         const websitePromptSites = (
-          p.websitePromptSites?.length
-            ? p.websitePromptSites
-            : groupLegacyRules(p.websitePromptRules)
+          p.websitePromptSites?.length ? p.websitePromptSites : []
         )
           .map((site) => normalizeWebsitePromptSite(site) ?? site)
           .filter((site) => site.domain || site.rules.length > 0);
