@@ -27,7 +27,7 @@ Hotkey **Cmd+Ctrl+R** triggers the pipeline:
 1. **Hotkey intercept** (Rust): `lib.rs` intercepts via `tauri_plugin_global_shortcut`, calls `commands::focused_app` + `commands::text` on the main thread, then resolves the active tab URL off-thread via `commands::browser_url::try_get_active_tab_url` (AppleScript / `osascript` for supported browsers). Emits `raypaste://hotkey-triggered` with `{ app, selected_text, target_pid, page_url? }`.
 
 2. **Completion flow** (`src/hooks/useAICompletionListener.ts`):
-   - Resolves active prompt (**URL rules** on `page_url`, when present → per-app mapping → `formal` fallback → first prompt). URL rules are configured under **Web rules** in the sidebar (`src/pages/url-rules/UrlRulesPage.tsx`); see `urlPromptRules` + `resolvePromptForHotkey` in `promptsStore`.
+   - Resolves active prompt via `resolvePromptForHotkey` in `promptsStore`: when `page_url` is present, **Website prompts** (`websitePromptSites`) are matched first (`pickWebsitePromptMatch` — domain + subdomain match, longest domain wins; then `path-prefix` rules by longest prefix, else a per-site `site` rule). Otherwise: per-app assignment → **Default prompt** (`defaultPromptId`) → built-in `formal` → first prompt in the list. Configure sites under **Website prompts** in the sidebar (`src/pages/website-prompts/WebsitePromptsPage.tsx`). If the user has website prompts but the hotkey fires in a known browser without a `page_url`, an info toast (once per browser bundle ID) notes that the fallback chain was used.
    - Creates `AbortController` for cancellation support
    - Branches to **review mode** or **instant mode**:
      - **Review mode**: Opens review overlay in loading state → streams completion chunks via `raypaste://stream-chunk` → emits `raypaste://stream-done` when complete → ReviewPage transitions to edit state
@@ -70,9 +70,9 @@ Hotkey **Cmd+Ctrl+R** triggers the pipeline:
 Zustand + `persist` (localStorage), all re-exported from `src/stores/index.ts`:
 
 - `settingsStore` — LLM mode (`"direct"` | `"api"`), provider (`"openrouter"` | `"cerebras"`), API keys, model, `reviewMode`, `themeMode` (`"light"` | `"dark"` | `"auto"`)
-- `promptsStore` — CRUD; each prompt has `appIds[]`. App assignments are **exclusive** — `assignAppToPrompt` removes the app from all other prompts. **Web rules** (`urlPromptRules`): ordered host-suffix or URL-prefix patterns that pick a prompt when the hotkey fires in a browser and `page_url` matches (first match wins).
+- `promptsStore` — CRUD; each prompt has `appIds[]`. App assignments are **exclusive** — `assignAppToPrompt` removes the app from all other prompts. **Website prompts** (`websitePromptSites`): per-site domain plus rules (`path-prefix` for specific URLs on that host, or `site` for the whole domain/subdomain tree). Icons for the list UI are loaded through `fetchWebsitePromptSiteIcon` (see Rust `website_icons` below).
 
-**Browser URL for web rules (macOS):** Implemented in `commands/browser_url.rs`. Uses AppleScript for Chrome (incl. Canary), Brave, Edge, Opera, Safari, and Arc. **Automation** permission may be required (System Settings → Privacy & Security → Automation). **Firefox** is not supported (no reliable URL via scripting). If URL lookup fails, Raypaste falls back to per-app prompt selection only.
+**Browser URL for website prompts (macOS):** Implemented in `commands/browser_url.rs`. Uses AppleScript for Chrome (incl. Canary), Brave, Edge, Opera, Safari, and Arc. **Automation** permission may be required (System Settings → Privacy & Security → Automation). **Firefox** is not supported (no reliable URL via scripting). If URL lookup fails, resolution skips website matching and uses the per-app / default / built-in fallback chain only.
 
 - `appsStore` — macOS installed apps list (via `commands::apps::list_apps`)
 
@@ -105,14 +105,15 @@ Schema: `src/services/db/schema.ts`. `src/services/db/index.ts` exports:
 `src-tauri/src/commands/` — modules:
 
 - `apps::list_apps` / `get_icon_base64` / `get_icon_base64_for_icns`
-- `browser_url::try_get_active_tab_url` — optional active tab URL via `osascript` (see Web rules)
+- `browser_url::try_get_active_tab_url` — optional active tab URL via `osascript` (feeds `page_url` for website prompt matching)
+- `website_icons::fetch_website_icon` — fetches and normalizes a site favicon (HTTP fetch, HTML `<link rel>` discovery, image bytes → data URL). The frontend only calls this via `invoke` from `src/services/websiteIcons.ts`; orchestration and caching of results per site live in `promptsStore.fetchWebsitePromptSiteIcon` + `WebsitePromptsPage`.
 - `focused_app::get_focused_app` / `get_frontmost_pid` — NSWorkspace/NSRunningApplication (ObjC2) bundle ID + PID
 - `focused_app::activate_app` — re-activates a target app by PID (used in instant mode to return focus)
 - `text::get_selected_text` / `write_text_back` — AX read/write
 
 All AppKit/AX calls must run on the main thread (`run_on_main_thread`).
 
-**App icons:** `.icns` → PNG conversion + caching pipeline — see `docs/APP_ICONS.md`.
+**App icons:** `.icns` → PNG conversion + caching pipeline — see `docs/APP_ICONS.md`. (Separate from **website** favicons in `website_icons.rs`.)
 
 ### Frontend conventions
 
