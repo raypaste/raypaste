@@ -24,7 +24,19 @@ export const dryRunClient: LLMClient = {
 function getDryRunText(req: LLMRequest) {
   const userMessage =
     [...req.messages].reverse().find((m) => m.role === "user")?.content ?? "";
-  return `[DRY RUN] ${userMessage}`;
+  const metadata = req.dryRunMetadata;
+  const parts: string[] = ["[DRY RUN]"];
+  const name = metadata?.promptName?.trim();
+  if (name) {
+    parts.push(`Prompt: ${name}`);
+  }
+  const url = metadata?.pageUrl?.trim();
+  if (url) {
+    parts.push(`Page: ${url}`);
+  }
+  const dryRunHeader = parts.join(" | ");
+
+  return `${dryRunHeader}\n\n${userMessage}`;
 }
 
 function waitForLatency(signal?: AbortSignal, ms = 500) {

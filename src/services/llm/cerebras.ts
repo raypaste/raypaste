@@ -1,4 +1,5 @@
 import type { LLMClient, LLMCompletion, LLMRequest } from "./types";
+import { chatCompletionBody } from "./chatCompletionBody";
 
 const BASE_URL = "https://api.cerebras.ai/v1/chat/completions";
 
@@ -53,7 +54,7 @@ export const cerebrasClient: LLMClient = {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({ ...req, stream: false }),
+      body: JSON.stringify(chatCompletionBody(req, false)),
       signal,
     });
     if (!res.ok) {
@@ -85,7 +86,7 @@ export const cerebrasClient: LLMClient = {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({ ...req, stream: true }),
+      body: JSON.stringify(chatCompletionBody(req, true)),
       signal,
     });
     if (!res.ok) {
