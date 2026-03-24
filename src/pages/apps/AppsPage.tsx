@@ -15,7 +15,9 @@ export function AppsPage() {
   const iconSrcByBundleId = useAppIcons(apps);
 
   useEffect(() => {
-    if (apps.length > 0) return;
+    if (apps.length > 0) {
+      return;
+    }
     invoke<InstalledApp[]>("list_apps")
       .then((result) => {
         setApps(result);

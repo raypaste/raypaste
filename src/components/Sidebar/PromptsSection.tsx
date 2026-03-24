@@ -64,7 +64,9 @@ export function PromptsSection({
   // Ungrouped: prompts with no app assignments
   const ungroupedPrompts = prompts.filter((p) => p.appIds.length === 0);
 
-  if (prompts.length === 0 && websitePromptSites.length === 0) return null;
+  if (prompts.length === 0 && websitePromptSites.length === 0) {
+    return null;
+  }
 
   function PromptItem({ id, name }: { id: string; name: string }) {
     const isSelected = selectedPromptId === id;

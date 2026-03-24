@@ -68,11 +68,17 @@ export function useAppIcons(apps: InstalledApp[]): Record<string, string> {
 
     withConcurrencyLimit(tasks, 8)
       .then((results) => {
-        if (cancelled) return;
+        if (cancelled) {
+          return;
+        }
+
         const entries = results.filter(
           (e): e is [string, string] => e !== null,
         );
-        if (entries.length === 0) return;
+        if (entries.length === 0) {
+          return;
+        }
+
         setIconSrcByBundleId((current) => ({
           ...current,
           ...Object.fromEntries(entries),

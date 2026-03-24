@@ -37,7 +37,9 @@ export function PromptAppSelector({
   const [query, setQuery] = useState("");
 
   useEffect(() => {
-    if (apps.length > 0) return;
+    if (apps.length > 0) {
+      return;
+    }
     invoke<InstalledApp[]>("list_apps")
       .then(setApps)
       .catch(() => {});

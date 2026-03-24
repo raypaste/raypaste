@@ -23,7 +23,9 @@ export function Layout() {
   const { apps, setApps } = useAppsStore();
 
   useEffect(() => {
-    if (apps.length > 0) return;
+    if (apps.length > 0) {
+      return;
+    }
     invoke<InstalledApp[]>("list_apps")
       .then(setApps)
       .catch(() => {});

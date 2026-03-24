@@ -107,7 +107,9 @@ export async function saveCompletion(entry: CompletionEntry): Promise<void> {
     .from(usageStats)
     .where(eq(usageStats.id, "global"));
   const stats = statsRows[0];
-  if (!stats) return;
+  if (!stats) {
+    return;
+  }
 
   const promptStatsMap = JSON.parse(stats.promptStats) as Record<
     string,
@@ -161,7 +163,9 @@ export async function updateCompletionOutcome(
       .from(usageStats)
       .where(eq(usageStats.id, "global"));
     const stats = statsRows[0];
-    if (!stats) return;
+    if (!stats) {
+      return;
+    }
     await db
       .update(usageStats)
       .set({ totalApplied: stats.totalApplied + 1 })

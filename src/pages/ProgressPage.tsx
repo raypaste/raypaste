@@ -79,7 +79,9 @@ export function ProgressPage() {
 
 function loadProgressState(): PendingInstantProgressStorage | null {
   const raw = localStorage.getItem(INSTANT_PROGRESS_STORAGE_KEY);
-  if (!raw) return null;
+  if (!raw) {
+    return null;
+  }
 
   try {
     return JSON.parse(raw) as PendingInstantProgressStorage;

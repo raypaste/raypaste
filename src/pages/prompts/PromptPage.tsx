@@ -28,7 +28,9 @@ export function PromptPage({ promptId, onDeleted }: PromptPageProps) {
   const [dirty, setDirty] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  if (!prompt) return null;
+  if (!prompt) {
+    return null;
+  }
 
   const isDefault = defaultPromptId === promptId;
   const websiteRules = websitePromptSites.flatMap((site) =>
@@ -41,7 +43,9 @@ export function PromptPage({ promptId, onDeleted }: PromptPageProps) {
   );
 
   function handleSave() {
-    if (!name.trim() || !text.trim()) return;
+    if (!name.trim() || !text.trim()) {
+      return;
+    }
     updatePrompt(promptId, {
       name: name.trim(),
       text: text.trim(),
@@ -52,7 +56,9 @@ export function PromptPage({ promptId, onDeleted }: PromptPageProps) {
 
   function handleDelete() {
     if (confirmDelete) {
-      if (isDefault) setDefaultPrompt(null);
+      if (isDefault) {
+        setDefaultPrompt(null);
+      }
       deletePrompt(promptId);
       onDeleted();
     } else {

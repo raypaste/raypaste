@@ -50,7 +50,9 @@ export function WebsitePromptsPage({
     const nextSite = websitePromptSites.find(
       (site) => site.domain && !site.iconSrc && site.iconStatus === "idle",
     );
-    if (!nextSite) return;
+    if (!nextSite) {
+      return;
+    }
     void fetchWebsitePromptSiteIcon(nextSite.id, fetchWebsiteIcon);
   }, [fetchWebsitePromptSiteIcon, websitePromptSites]);
 
@@ -114,8 +116,12 @@ export function WebsitePromptsPage({
           .filter((name): name is string => !!name) ?? [],
       ),
     );
-    if (names.length === 0) return "No prompts assigned";
-    if (names.length === 1) return names[0];
+    if (names.length === 0) {
+      return "No prompts assigned";
+    }
+    if (names.length === 1) {
+      return names[0];
+    }
 
     return `${names[0]} +${names.length - 1}`;
   }

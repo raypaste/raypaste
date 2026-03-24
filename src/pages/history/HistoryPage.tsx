@@ -83,17 +83,23 @@ export function HistoryPage() {
 
   const handleSearchChange = (val: string) => {
     setSearch(val);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
     debounceRef.current = setTimeout(() => setDebouncedSearch(val), 250);
   };
 
-  const handleDelete = (id: string) => {
-    deleteCompletion(id)
-      .then(() => {
-        setDeletingId(null);
-        setRefreshKey((k) => k + 1);
-      })
-      .catch(() => {});
+  const handleDelete = (id: string | null) => {
+    if (id) {
+      deleteCompletion(id)
+        .then(() => {
+          setDeletingId(null);
+          setRefreshKey((k) => k + 1);
+        })
+        .catch(() => {});
+    }
+
+    return;
   };
 
   const handleClearHistory = () => {
@@ -206,7 +212,7 @@ export function HistoryPage() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                if (deletingId) handleDelete(deletingId);
+                handleDelete(deletingId);
               }}
               className={DIALOG_ACTION_DESTRUCTIVE_CLS}
             >
