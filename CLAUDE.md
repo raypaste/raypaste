@@ -11,10 +11,12 @@ pnpm lint / lint:fix  # Lint
 pnpm format           # Format (Prettier sorts Tailwind classes)
 pnpm format:rust      # Format Rust (rustfmt via src-tauri/Cargo.toml)
 pnpm check            # Lint + format together
+pnpm test             # Vitest (single run; see docs/TESTING_STRATEGY.md)
+pnpm test:watch       # Vitest watch mode
 pnpm db:generate      # Generate migration after editing src/services/db/schema.ts
 ```
 
-No automated tests.
+Automated tests use Vitest + Testing Library (`pnpm test`). Strategy and mocking notes: `docs/TESTING_STRATEGY.md`.
 
 ## Architecture
 
