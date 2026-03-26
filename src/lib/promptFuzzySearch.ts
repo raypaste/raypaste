@@ -18,6 +18,8 @@ function tokenizeQuery(q: string): string[] {
 /**
  * Score a single token against haystack. Higher is better; null if no fuzzy match.
  * Prefers contiguous substring hits, then ordered subsequence (gap-tolerant).
+ * Subsequence score penalizes total skipped characters between matches (including
+ * leading skips before the first match), not raw indices.
  */
 function scoreToken(haystack: string, token: string): number | null {
   const h = haystack.toLowerCase();
@@ -30,14 +32,16 @@ function scoreToken(haystack: string, token: string): number | null {
   }
 
   let hi = 0;
-  let penalty = 0;
+  let prev = -1;
+  let gapPenalty = 0;
   for (let i = 0; i < t.length; i++) {
     const pos = h.indexOf(t[i]!, hi);
     if (pos === -1) return null;
-    penalty += pos;
+    gapPenalty += pos - prev - 1;
+    prev = pos;
     hi = pos + 1;
   }
-  return 400 - penalty / Math.max(t.length, 1);
+  return 400 - gapPenalty / Math.max(t.length, 1);
 }
 
 function scoreTokenAcrossFields(
