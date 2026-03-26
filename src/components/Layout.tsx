@@ -85,6 +85,9 @@ export function Layout() {
               key={selectedPromptId}
               promptId={selectedPromptId}
               onDeleted={() => handleNavigate("new-prompt")}
+              onNavigateToWebsitePromptSite={(siteId) =>
+                handleNavigate("website-prompts", undefined, siteId)
+              }
             />
           )}
           {activePage === "apps" && <AppsPage />}
