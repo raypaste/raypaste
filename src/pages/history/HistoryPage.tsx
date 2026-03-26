@@ -26,11 +26,6 @@ import {
 import { EntryCard } from "#/pages/history/EntryCard";
 import { DetailDialog } from "#/pages/history/DetailDialog";
 import { OverviewPanel } from "#/pages/history/OverviewPanel";
-import {
-  DIALOG_CONTENT_CLS,
-  DIALOG_CANCEL_CLS,
-  DIALOG_ACTION_DESTRUCTIVE_CLS,
-} from "#/pages/history/constants";
 
 const LIST_LIMIT = 200;
 
@@ -193,7 +188,7 @@ export function HistoryPage() {
         open={deletingId !== null}
         onOpenChange={(open) => !open && setDeletingId(null)}
       >
-        <AlertDialogContent size="sm" className={DIALOG_CONTENT_CLS}>
+        <AlertDialogContent size="sm">
           <AlertDialogHeader>
             <AlertDialogMedia className="bg-muted/40">
               <Trash2 className="text-muted-foreground" />
@@ -207,14 +202,11 @@ export function HistoryPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className={DIALOG_CANCEL_CLS}>
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 handleDelete(deletingId);
               }}
-              className={DIALOG_ACTION_DESTRUCTIVE_CLS}
             >
               Delete
             </AlertDialogAction>

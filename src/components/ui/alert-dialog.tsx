@@ -4,6 +4,13 @@ import { AlertDialog as AlertDialogPrimitive } from "@base-ui/react/alert-dialog
 import { cn } from "#/lib/utils";
 import { Button } from "#/components/ui/button";
 
+const alertDialogContentCls =
+  "bg-card border border-border shadow-2xl ring-0 max-w-sm text-card-foreground";
+const alertDialogCancelCls =
+  "border border-border bg-background text-muted-foreground hover:bg-muted/40 hover:text-foreground";
+const alertDialogActionCls =
+  "border border-destructive/40 text-destructive-strong hover:text-destructive-strong dark:border-destructive/50 dark:hover:bg-destructive/35 dark:hover:text-destructive-strong";
+
 function AlertDialog({ ...props }: AlertDialogPrimitive.Root.Props) {
   return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />;
 }
@@ -50,7 +57,8 @@ function AlertDialogContent({
         data-slot="alert-dialog-content"
         data-size={size}
         className={cn(
-          "group/alert-dialog-content bg-background ring-foreground/10 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 fixed top-1/2 left-1/2 z-50 grid w-full -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl p-4 ring-1 duration-100 outline-none data-[size=default]:max-w-xs data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-sm",
+          "group/alert-dialog-content data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 fixed top-1/2 left-1/2 z-50 grid w-full -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl p-4 duration-100 outline-none",
+          alertDialogContentCls,
           className,
         )}
         {...props}
@@ -145,8 +153,9 @@ function AlertDialogAction({
 }: React.ComponentProps<typeof Button>) {
   return (
     <Button
+      variant="destructive"
       data-slot="alert-dialog-action"
-      className={cn(className)}
+      className={cn(alertDialogActionCls, className)}
       {...props}
     />
   );
@@ -162,7 +171,7 @@ function AlertDialogCancel({
   return (
     <AlertDialogPrimitive.Close
       data-slot="alert-dialog-cancel"
-      className={cn(className)}
+      className={cn(alertDialogCancelCls, className)}
       render={<Button variant={variant} size={size} />}
       {...props}
     />

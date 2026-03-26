@@ -14,11 +14,6 @@ import {
   AlertDialogTrigger,
 } from "#/components/ui/alert-dialog";
 import { avgTokPerSec, avgCompletionTime } from "./helpers";
-import {
-  DIALOG_CONTENT_CLS,
-  DIALOG_CANCEL_CLS,
-  DIALOG_ACTION_DESTRUCTIVE_CLS,
-} from "#/pages/history/constants";
 
 function ClearHistoryDialog({ onConfirm }: { onConfirm: () => void }) {
   const [open, setOpen] = useState(false);
@@ -35,7 +30,7 @@ function ClearHistoryDialog({ onConfirm }: { onConfirm: () => void }) {
         <X size={12} />
         Clear history
       </AlertDialogTrigger>
-      <AlertDialogContent size="sm" className={DIALOG_CONTENT_CLS}>
+      <AlertDialogContent size="sm">
         <AlertDialogHeader>
           <AlertDialogMedia className="bg-muted/40">
             <X className="text-muted-foreground" />
@@ -49,15 +44,12 @@ function ClearHistoryDialog({ onConfirm }: { onConfirm: () => void }) {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel className={DIALOG_CANCEL_CLS}>
-            Cancel
-          </AlertDialogCancel>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
             onClick={() => {
               onConfirm();
               setOpen(false);
             }}
-            className={DIALOG_ACTION_DESTRUCTIVE_CLS}
           >
             Clear
           </AlertDialogAction>
@@ -82,7 +74,7 @@ function ResetAllDialog({ onConfirm }: { onConfirm: () => void }) {
         <Trash2 size={12} />
         Reset all data
       </AlertDialogTrigger>
-      <AlertDialogContent size="sm" className={DIALOG_CONTENT_CLS}>
+      <AlertDialogContent size="sm">
         <AlertDialogHeader>
           <AlertDialogMedia className="bg-red-500/10">
             <Trash2 className="text-red-400" />
@@ -97,15 +89,12 @@ function ResetAllDialog({ onConfirm }: { onConfirm: () => void }) {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel className={DIALOG_CANCEL_CLS}>
-            Cancel
-          </AlertDialogCancel>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
             onClick={() => {
               onConfirm();
               setOpen(false);
             }}
-            className={DIALOG_ACTION_DESTRUCTIVE_CLS}
           >
             Reset everything
           </AlertDialogAction>

@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "raypaste",
+  "productName": "Raypaste",
   "version": "0.3.0",
   "identifier": "com.raypaste.raypaste",
   "build": {
