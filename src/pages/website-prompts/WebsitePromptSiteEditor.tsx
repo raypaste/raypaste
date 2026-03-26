@@ -151,13 +151,9 @@ export function WebsitePromptSiteEditor({
                     placeholder="Choose prompt"
                     inputClassName="w-full min-w-0 max-w-none"
                     onAssign={(promptId) =>
-                      updateWebsitePromptSiteRule(
-                        selectedSite.id,
-                        rule.id,
-                        {
-                          promptId,
-                        },
-                      )
+                      updateWebsitePromptSiteRule(selectedSite.id, rule.id, {
+                        promptId,
+                      })
                     }
                   />
                 }
@@ -180,6 +176,7 @@ export function WebsitePromptSiteEditor({
                     </p>
                   ) : null
                 }
+                assignedPromptId={rule.promptId}
                 onDelete={() =>
                   removeWebsitePromptSiteRule(selectedSite.id, rule.id)
                 }
@@ -240,13 +237,9 @@ export function WebsitePromptSiteEditor({
                       placeholder="Choose prompt"
                       inputClassName="w-full min-w-0 max-w-none"
                       onAssign={(promptId) =>
-                        updateWebsitePromptSiteRule(
-                          selectedSite.id,
-                          rule.id,
-                          {
-                            promptId,
-                          },
-                        )
+                        updateWebsitePromptSiteRule(selectedSite.id, rule.id, {
+                          promptId,
+                        })
                       }
                     />
                   }
@@ -274,6 +267,8 @@ export function WebsitePromptSiteEditor({
                       </p>
                     ) : null
                   }
+                  assignedPromptId={rule.promptId}
+                  committedInputValue={rule.value}
                   onDelete={() =>
                     removeWebsitePromptSiteRule(selectedSite.id, rule.id)
                   }
