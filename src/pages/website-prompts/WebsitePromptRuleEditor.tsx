@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
-import { cn } from "#/lib/utils";
 import { Trash2 } from "lucide-react";
+import { Input } from "#/components/ui/input";
+import { cn } from "#/lib/utils";
 
 interface WebsitePromptRuleEditorProps {
   title: string;
@@ -32,7 +33,7 @@ export function WebsitePromptRuleEditor({
   onDelete,
 }: WebsitePromptRuleEditorProps) {
   return (
-    <div className="border-border bg-muted/10 rounded-xl border p-4">
+    <div className="border-border bg-muted/50 rounded-xl border p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-foreground text-sm font-medium">{title}</p>
@@ -48,49 +49,51 @@ export function WebsitePromptRuleEditor({
         </button>
       </div>
 
-      <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_220px]">
-        <div className="space-y-3">
-          <div className="space-y-1.5">
+      <div className="mt-4 flex flex-col gap-3">
+        <div className="space-y-1.5">
+          <label className="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase">
+            Match URL
+          </label>
+          <Input
+            type="text"
+            value={inputValue}
+            disabled={inputDisabled}
+            onChange={(event) => onInputChange?.(event.target.value)}
+            onBlur={(event) => onInputBlur?.(event.target.value)}
+            placeholder={inputPlaceholder}
+            className={cn(
+              "border-border bg-background text-foreground w-full px-3 shadow-none",
+              "placeholder:text-muted-foreground focus-visible:border-ring",
+              inputDisabled && "bg-muted/40 text-muted-foreground disabled:opacity-100",
+            )}
+          />
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-2">
+          <div className="flex min-w-0 flex-col gap-1.5">
             <label className="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase">
-              Match URL
+              Prompt
             </label>
-            <input
+            <div className="min-h-8 w-full min-w-0 **:data-[slot=input-group]:w-full">
+              {promptCombobox}
+            </div>
+          </div>
+
+          <div className="flex min-w-0 flex-col gap-1.5">
+            <label className="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase">
+              Label
+            </label>
+            <Input
               type="text"
-              value={inputValue}
-              disabled={inputDisabled}
-              onChange={(event) => onInputChange?.(event.target.value)}
-              onBlur={(event) => onInputBlur?.(event.target.value)}
-              placeholder={inputPlaceholder}
+              value={labelValue}
+              onChange={(event) => onLabelChange(event.target.value)}
+              placeholder="Optional label"
               className={cn(
-                "border-border bg-background text-foreground w-full rounded-lg border px-3 py-2 text-sm",
-                "placeholder:text-muted-foreground focus:border-ring focus:outline-none",
-                inputDisabled && "bg-muted/40 text-muted-foreground",
+                "border-border bg-background text-foreground w-full px-3 shadow-none",
+                "placeholder:text-muted-foreground focus-visible:border-ring",
               )}
             />
           </div>
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase">
-            Prompt
-          </label>
-          {promptCombobox}
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase">
-            Label
-          </label>
-          <input
-            type="text"
-            value={labelValue}
-            onChange={(event) => onLabelChange(event.target.value)}
-            placeholder="Optional label"
-            className={cn(
-              "border-border bg-background text-foreground w-full rounded-lg border px-3 py-2 text-sm",
-              "placeholder:text-muted-foreground focus:border-ring focus:outline-none",
-            )}
-          />
         </div>
       </div>
 

@@ -40,7 +40,7 @@ export function WebsitePromptsPage(props: WebsitePromptsPageProps) {
 
   return (
     <>
-      <div className="flex h-full flex-col gap-6 px-6 pb-6">
+      <div className="flex h-full flex-col gap-6 px-6 pb-12">
         <WebsitePromptsIntro />
 
         <WebsitePromptsToolbar

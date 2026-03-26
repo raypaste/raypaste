@@ -1,5 +1,9 @@
 import { useState } from "react";
 import { Eye, EyeOff, Monitor, Moon, Sun } from "lucide-react";
+import {
+  filterComboboxItems,
+  useComboboxSearchDirty,
+} from "#/hooks/useComboboxSearchDirty";
 import { LLM_PROVIDER } from "#/services/llm/types";
 import { cn } from "#/lib/utils";
 import { useSettingsStore, usePromptsStore } from "#/stores";
@@ -44,18 +48,22 @@ export function SettingsPage() {
   const [showKey, setShowKey] = useState(false);
   const [promptQuery, setPromptQuery] = useState("");
   const [modelQuery, setModelQuery] = useState("");
+  const promptSearch = useComboboxSearchDirty();
+  const modelSearch = useComboboxSearchDirty();
 
-  const filteredPrompts = promptQuery
-    ? prompts.filter((p) =>
-        p.name.toLowerCase().includes(promptQuery.toLowerCase()),
-      )
-    : prompts;
+  const filteredPrompts = filterComboboxItems(
+    prompts,
+    promptQuery,
+    promptSearch.searchDirty,
+    (p) => p.name,
+  );
 
-  const filteredModelOptions = modelQuery
-    ? modelOptions.filter((m) =>
-        m.label.toLowerCase().includes(modelQuery.toLowerCase()),
-      )
-    : modelOptions;
+  const filteredModelOptions = filterComboboxItems(
+    modelOptions,
+    modelQuery,
+    modelSearch.searchDirty,
+    (m) => m.label,
+  );
 
   const currentKey =
     provider === LLM_PROVIDER.Cerebras ? cerebrasApiKey : openrouterApiKey;
@@ -239,6 +247,7 @@ export function SettingsPage() {
           onValueChange={(name) =>
             setDefaultPrompt(prompts.find((p) => p.name === name)?.id ?? null)
           }
+          onOpenChange={promptSearch.onOpenChange}
           onInputValueChange={(val) => setPromptQuery(val)}
         >
           <ComboboxInput
@@ -246,6 +255,7 @@ export function SettingsPage() {
             showTrigger
             showClear={!!defaultPromptId}
             className="w-full"
+            onInput={promptSearch.markSearchDirtyFromInput}
           />
           <ComboboxContent>
             {filteredPrompts.length === 0 && (
@@ -276,12 +286,14 @@ export function SettingsPage() {
                 modelOptions.find((m) => m.label === label)?.value ?? label,
               );
           }}
+          onOpenChange={modelSearch.onOpenChange}
           onInputValueChange={(val) => setModelQuery(val)}
         >
           <ComboboxInput
             placeholder="Select a model..."
             showTrigger
             className="w-full"
+            onInput={modelSearch.markSearchDirtyFromInput}
           />
           <ComboboxContent>
             {filteredModelOptions.length === 0 && (

@@ -151,6 +151,7 @@ export function WebsitePromptSiteEditor({
                     prompts={prompts}
                     assignedPromptId={rule.promptId}
                     placeholder="Choose prompt"
+                    inputClassName="w-full min-w-0 max-w-none"
                     onAssign={(promptId) =>
                       updateWebsitePromptSiteRule(selectedSite.id, rule.id, {
                         promptId,
@@ -223,6 +224,7 @@ export function WebsitePromptSiteEditor({
                       prompts={prompts}
                       assignedPromptId={rule.promptId}
                       placeholder="Choose prompt"
+                      inputClassName="w-full min-w-0 max-w-none"
                       onAssign={(promptId) =>
                         updateWebsitePromptSiteRule(selectedSite.id, rule.id, {
                           promptId,
