@@ -1,12 +1,16 @@
 import { ReactNode } from "react";
 
-interface RuleSectionProps {
+interface WebsitePromptRuleSectionProps {
   title: string;
   body: string;
   children: ReactNode;
 }
 
-export function RuleSection({ title, body, children }: RuleSectionProps) {
+export function WebsitePromptRuleSection({
+  title,
+  body,
+  children,
+}: WebsitePromptRuleSectionProps) {
   return (
     <section className="space-y-3">
       <div>

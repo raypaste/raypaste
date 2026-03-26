@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 import { cn } from "#/lib/utils";
 import { Trash2 } from "lucide-react";
 
-interface RuleEditorProps {
+interface WebsitePromptRuleEditorProps {
   title: string;
   description: string;
   labelValue: string;
@@ -17,7 +17,7 @@ interface RuleEditorProps {
   onDelete: () => void;
 }
 
-export function RuleEditor({
+export function WebsitePromptRuleEditor({
   title,
   description,
   labelValue,
@@ -30,7 +30,7 @@ export function RuleEditor({
   promptCombobox,
   footer,
   onDelete,
-}: RuleEditorProps) {
+}: WebsitePromptRuleEditorProps) {
   return (
     <div className="border-border bg-muted/10 rounded-xl border p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
