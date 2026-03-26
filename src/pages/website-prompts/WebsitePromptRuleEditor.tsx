@@ -29,7 +29,37 @@ interface WebsitePromptRuleEditorProps {
   /** Shown on its own row below the Prompt / Label grid (e.g. “Edit prompt”). */
   promptBelowRow?: ReactNode;
   footer?: ReactNode;
+  assignedPromptId: string | null;
+  /** Saved path/URL from the store when the input is editable; omit when `inputDisabled`. */
+  committedInputValue?: string;
   onDelete: () => void;
+}
+
+function deleteWouldLoseMeaningfulData({
+  assignedPromptId,
+  labelValue,
+  inputDisabled,
+  inputValue,
+  committedInputValue,
+}: {
+  assignedPromptId: string | null;
+  labelValue: string;
+  inputDisabled: boolean;
+  inputValue: string;
+  committedInputValue?: string;
+}): boolean {
+  const hasPrompt = (assignedPromptId ?? "").trim().length > 0;
+  const hasLabel = labelValue.trim().length > 0;
+  const hasSavedPath =
+    !inputDisabled &&
+    committedInputValue !== undefined &&
+    committedInputValue.trim().length > 0;
+  const hasUnsavedPathDraft =
+    !inputDisabled &&
+    committedInputValue !== undefined &&
+    inputValue !== committedInputValue;
+
+  return hasPrompt || hasLabel || hasSavedPath || hasUnsavedPathDraft;
 }
 
 export function WebsitePromptRuleEditor({
@@ -45,9 +75,19 @@ export function WebsitePromptRuleEditor({
   promptCombobox,
   promptBelowRow,
   footer,
+  assignedPromptId,
+  committedInputValue,
   onDelete,
 }: WebsitePromptRuleEditorProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const shouldConfirmDelete = deleteWouldLoseMeaningfulData({
+    assignedPromptId,
+    labelValue,
+    inputDisabled,
+    inputValue,
+    committedInputValue,
+  });
 
   return (
     <div className="border-border bg-muted/50 rounded-xl border p-4">
@@ -88,7 +128,13 @@ export function WebsitePromptRuleEditor({
           type="button"
           variant="ghost"
           size="icon"
-          onClick={() => setDeleteDialogOpen(true)}
+          onClick={() => {
+            if (shouldConfirmDelete) {
+              setDeleteDialogOpen(true);
+            } else {
+              onDelete();
+            }
+          }}
           className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
           aria-label="Remove rule"
         >
