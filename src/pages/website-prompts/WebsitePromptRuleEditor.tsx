@@ -1,7 +1,18 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { Input } from "#/components/ui/input";
 import { Button } from "#/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from "#/components/ui/alert-dialog";
 import { cn } from "#/lib/utils";
 
 interface WebsitePromptRuleEditorProps {
@@ -33,8 +44,38 @@ export function WebsitePromptRuleEditor({
   footer,
   onDelete,
 }: WebsitePromptRuleEditorProps) {
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
   return (
     <div className="border-border bg-muted/50 rounded-xl border p-4">
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogMedia className="bg-muted/40">
+              <Trash2 className="text-muted-foreground" />
+            </AlertDialogMedia>
+            <AlertDialogTitle className="text-[15px] font-semibold">
+              Remove this rule?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              This removes the prompt assignment for this URL pattern. Your
+              saved prompts are not deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                onDelete();
+                setDeleteDialogOpen(false);
+              }}
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-foreground text-sm font-medium">{title}</p>
@@ -44,7 +85,7 @@ export function WebsitePromptRuleEditor({
           type="button"
           variant="ghost"
           size="icon"
-          onClick={onDelete}
+          onClick={() => setDeleteDialogOpen(true)}
           className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
           aria-label="Remove rule"
         >
