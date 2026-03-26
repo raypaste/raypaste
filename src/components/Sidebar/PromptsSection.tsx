@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ChevronRight, Star } from "lucide-react";
+import { ChevronRight, Search, Star } from "lucide-react";
 import {
   Collapsible,
   CollapsibleTrigger,
@@ -11,6 +11,11 @@ import { usePromptsStore, useAppsStore } from "#/stores";
 import type { Page } from "./SidebarNav";
 import { useAppIcons } from "#/hooks/useAppIcons";
 import { WebsitePromptSiteIcon } from "#/components/website-prompts/WebsitePromptSiteIcon";
+import { Input } from "#/components/ui/input";
+import {
+  buildPromptSearchIndex,
+  filterAndSortPromptsByFuzzyQuery,
+} from "#/lib/promptFuzzySearch";
 
 interface PromptsSectionProps {
   activePage: Page;
@@ -98,11 +103,33 @@ export function PromptsSection({
     [prompts],
   );
 
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const promptSearchIndex = useMemo(
+    () => buildPromptSearchIndex(prompts, apps, websitePromptSites),
+    [prompts, apps, websitePromptSites],
+  );
+
+  const isSearching = searchQuery.trim().length > 0;
+
+  const promptSearchResults = useMemo(
+    () => filterAndSortPromptsByFuzzyQuery(promptSearchIndex, searchQuery),
+    [promptSearchIndex, searchQuery],
+  );
+
   if (prompts.length === 0 && websitePromptSites.length === 0) {
     return null;
   }
 
-  function PromptItem({ id, name }: { id: string; name: string }) {
+  function PromptItem({
+    id,
+    name,
+    subtitle,
+  }: {
+    id: string;
+    name: string;
+    subtitle?: string;
+  }) {
     const isSelected = selectedPromptId === id;
     const isDefault = defaultPromptId === id;
     return (
@@ -112,13 +139,21 @@ export function PromptsSection({
         size="sm"
         onClick={() => onNavigate("prompt", id)}
         className={cn(
-          "h-auto w-full justify-start gap-1.5 py-1 pr-2 pl-8 text-left text-[13px] font-normal",
+          "h-auto w-full justify-start gap-1.5 py-1 pr-2 text-left text-[13px] font-normal",
+          subtitle ? "pl-3" : "pl-8",
           isSelected
             ? "bg-secondary text-foreground"
             : "text-muted-foreground hover:bg-secondary hover:text-foreground",
         )}
       >
-        <span className="flex-1 truncate">{name}</span>
+        <span className="flex min-w-0 flex-1 flex-col items-start gap-0">
+          <span className="w-full truncate">{name}</span>
+          {subtitle ? (
+            <span className="text-muted-foreground w-full truncate text-[11px] leading-tight">
+              {subtitle}
+            </span>
+          ) : null}
+        </span>
         {isDefault && (
           <Star className="fill-primary text-primary mr-1.5 h-2.5 w-2.5 shrink-0" />
         )}
@@ -131,37 +166,108 @@ export function PromptsSection({
       <p className="text-muted-foreground mb-1 px-3 text-xs font-semibold tracking-wider uppercase select-none">
         Prompts
       </p>
-      <div className="space-y-0.5">
-        {/* App groups */}
-        {appGroups.map(({ app, prompts: groupPrompts }) => {
-          const isOpen = resolvedOpenGroups.has(app.bundleId);
-          return (
-            <Collapsible
-              key={app.bundleId}
-              open={isOpen}
-              onOpenChange={() => toggleGroup(app.bundleId)}
-            >
-              <CollapsibleTrigger className="text-foreground/80 hover:bg-secondary hover:text-foreground flex w-full cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors select-none">
-                {iconSrcByBundleId[app.bundleId] ? (
-                  <img
-                    src={iconSrcByBundleId[app.bundleId]}
-                    alt=""
-                    className="h-5 w-5 shrink-0 object-contain"
+      {prompts.length > 0 ? (
+        <div className="mb-2 px-2">
+          <div className="relative">
+            <Search
+              className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2"
+              aria-hidden
+            />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search prompts…"
+              className="h-8 pl-8 text-sm"
+              aria-label="Search prompts"
+              name="prompts-sidebar-search"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="none"
+              spellCheck={false}
+            />
+          </div>
+        </div>
+      ) : null}
+
+      {isSearching ? (
+        <div className="space-y-0.5">
+          {promptSearchResults.length === 0 ? (
+            <p className="text-muted-foreground px-3 py-1 text-sm">
+              No prompts match.
+            </p>
+          ) : (
+            promptSearchResults.map((row) => (
+              <PromptItem
+                key={row.id}
+                id={row.id}
+                name={row.promptName}
+                subtitle={row.contextLabel}
+              />
+            ))
+          )}
+        </div>
+      ) : (
+        <div className="space-y-0.5">
+          {/* App groups */}
+          {appGroups.map(({ app, prompts: groupPrompts }) => {
+            const isOpen = resolvedOpenGroups.has(app.bundleId);
+            return (
+              <Collapsible
+                key={app.bundleId}
+                open={isOpen}
+                onOpenChange={() => toggleGroup(app.bundleId)}
+              >
+                <CollapsibleTrigger className="text-foreground/80 hover:bg-secondary hover:text-foreground flex w-full cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors select-none">
+                  {iconSrcByBundleId[app.bundleId] ? (
+                    <img
+                      src={iconSrcByBundleId[app.bundleId]}
+                      alt=""
+                      className="h-5 w-5 shrink-0 object-contain"
+                    />
+                  ) : (
+                    <div className="bg-muted/50 h-5 w-5 shrink-0 rounded-sm" />
+                  )}
+                  <span className="truncate">{app.name}</span>
+                  <ChevronRight
+                    className={cn(
+                      "ml-auto h-3.5 w-3.5 shrink-0 transition-transform duration-150",
+                      isOpen && "rotate-90",
+                    )}
                   />
-                ) : (
-                  <div className="bg-muted/50 h-5 w-5 shrink-0 rounded-sm" />
-                )}
-                <span className="truncate">{app.name}</span>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="mt-0.5 space-y-0.5">
+                    {groupPrompts.map((prompt) => (
+                      <PromptItem
+                        key={prompt.id}
+                        id={prompt.id}
+                        name={prompt.name}
+                      />
+                    ))}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            );
+          })}
+
+          {/* Unassigned: no app and no website rule referencing this prompt */}
+          {unassignedPrompts.length > 0 && (
+            <Collapsible
+              open={resolvedOpenGroups.has("__unassigned__")}
+              onOpenChange={() => toggleGroup("__unassigned__")}
+            >
+              <CollapsibleTrigger className="text-foreground/80 hover:bg-secondary hover:text-foreground flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors select-none">
                 <ChevronRight
                   className={cn(
-                    "ml-auto h-3.5 w-3.5 shrink-0 transition-transform duration-150",
-                    isOpen && "rotate-90",
+                    "h-3.5 w-3.5 shrink-0 transition-transform duration-150",
+                    resolvedOpenGroups.has("__unassigned__") && "rotate-90",
                   )}
                 />
+                <span>Unassigned</span>
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <div className="mt-0.5 space-y-0.5">
-                  {groupPrompts.map((prompt) => (
+                  {unassignedPrompts.map((prompt) => (
                     <PromptItem
                       key={prompt.id}
                       id={prompt.id}
@@ -171,40 +277,11 @@ export function PromptsSection({
                 </div>
               </CollapsibleContent>
             </Collapsible>
-          );
-        })}
+          )}
+        </div>
+      )}
 
-        {/* Unassigned: no app and no website rule referencing this prompt */}
-        {unassignedPrompts.length > 0 && (
-          <Collapsible
-            open={resolvedOpenGroups.has("__unassigned__")}
-            onOpenChange={() => toggleGroup("__unassigned__")}
-          >
-            <CollapsibleTrigger className="text-foreground/80 hover:bg-secondary hover:text-foreground flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors select-none">
-              <ChevronRight
-                className={cn(
-                  "h-3.5 w-3.5 shrink-0 transition-transform duration-150",
-                  resolvedOpenGroups.has("__unassigned__") && "rotate-90",
-                )}
-              />
-              <span>Unassigned</span>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <div className="mt-0.5 space-y-0.5">
-                {unassignedPrompts.map((prompt) => (
-                  <PromptItem
-                    key={prompt.id}
-                    id={prompt.id}
-                    name={prompt.name}
-                  />
-                ))}
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
-        )}
-      </div>
-
-      {websitePromptSites.length > 0 && (
+      {!isSearching && websitePromptSites.length > 0 && (
         <div className="mt-4">
           <p className="text-muted-foreground mb-1 px-3 text-xs font-semibold tracking-wider uppercase select-none">
             Website prompts
