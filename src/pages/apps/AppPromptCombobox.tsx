@@ -40,7 +40,12 @@ export function AppPromptCombobox({
   const selectedName =
     prompts.find((p) => p.id === assignedPromptId)?.name ?? "";
 
-  const filtered = filterComboboxItems(prompts, query, searchDirty, (p) => p.name);
+  const filtered = filterComboboxItems(
+    prompts,
+    query,
+    searchDirty,
+    (p) => p.name,
+  );
 
   return (
     <Combobox

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Lock } from "lucide-react";
 import { cn } from "#/lib/utils";
+import { Button } from "#/components/ui/button";
 import { usePromptsStore } from "#/stores";
 import { PromptAppSelector } from "#/pages/prompts/PromptAppSelector";
 
@@ -107,18 +108,9 @@ export function NewPromptPage({ onCreated }: NewPromptPageProps) {
           onChange={setSelectedAppIds}
         />
 
-        <button
-          onClick={handleSave}
-          disabled={!canSave}
-          className={cn(
-            "cursor-pointer rounded-lg px-4 py-2 text-sm font-medium transition-colors",
-            canSave
-              ? "bg-primary text-primary-foreground hover:bg-primary/90"
-              : "bg-muted text-muted-foreground cursor-not-allowed",
-          )}
-        >
+        <Button onClick={handleSave} disabled={!canSave}>
           Save Prompt
-        </button>
+        </Button>
       </div>
     </div>
   );

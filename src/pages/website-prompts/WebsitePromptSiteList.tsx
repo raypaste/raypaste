@@ -1,4 +1,5 @@
 import { Globe } from "lucide-react";
+import { Button } from "#/components/ui/button";
 import { cn } from "#/lib/utils";
 import type { WebsitePromptSite } from "#/stores/promptsStore";
 import { WebsitePromptSiteIcon } from "#/components/website-prompts/WebsitePromptSiteIcon";
@@ -34,12 +35,13 @@ export function WebsitePromptSiteList({
       {sites.map((site) => {
         const isSelected = site.id === selectedSiteId;
         return (
-          <button
+          <Button
             key={site.id}
             type="button"
+            variant="ghost"
             onClick={() => onSelectSite(site.id)}
             className={cn(
-              "w-full rounded-xl border p-2 text-left transition-colors",
+              "h-auto min-h-0 w-full flex-col items-stretch rounded-xl border p-2 text-left font-normal",
               isSelected
                 ? "border-primary/30 bg-primary/8"
                 : "border-border bg-background/70 hover:bg-background",
@@ -66,7 +68,7 @@ export function WebsitePromptSiteList({
                 </p>
               </div>
             </div>
-          </button>
+          </Button>
         );
       })}
     </div>

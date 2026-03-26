@@ -1,6 +1,7 @@
 import type { Dispatch, SetStateAction } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { cn } from "#/lib/utils";
+import { Button } from "#/components/ui/button";
 import type {
   Prompt,
   WebsitePromptSite,
@@ -113,22 +114,17 @@ export function WebsitePromptSiteEditor({
       >
         {selectedSite.rules.filter((rule) => rule.kind === "site").length ===
         0 ? (
-          <button
+          <Button
             type="button"
+            variant="secondary"
             disabled={!selectedSite.domain}
             onClick={() =>
               addWebsitePromptSiteRule(selectedSite.id, { kind: "site" })
             }
-            className={cn(
-              "inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-              selectedSite.domain
-                ? "bg-secondary text-foreground hover:bg-secondary/80"
-                : "bg-muted/50 text-muted-foreground cursor-not-allowed",
-            )}
           >
             <Plus className="h-4 w-4" />
             Add site wide prompt
-          </button>
+          </Button>
         ) : (
           selectedSite.rules
             .filter((rule) => rule.kind === "site")
@@ -251,35 +247,31 @@ export function WebsitePromptSiteEditor({
               );
             })}
 
-          <button
+          <Button
             type="button"
+            variant="secondary"
             disabled={!selectedSite.domain}
             onClick={() =>
               addWebsitePromptSiteRule(selectedSite.id, {
                 kind: "path-prefix",
               })
             }
-            className={cn(
-              "inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-              selectedSite.domain
-                ? "bg-secondary text-foreground hover:bg-secondary/80"
-                : "bg-muted/50 text-muted-foreground cursor-not-allowed",
-            )}
           >
             <Plus className="h-4 w-4" />
             Add subpath rule
-          </button>
+          </Button>
         </div>
       </WebsitePromptRuleSection>
 
-      <button
+      <Button
         type="button"
+        variant="ghost"
         onClick={onRequestRemoveSite}
-        className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive mt-4 inline-flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm transition-colors"
+        className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive mt-4 gap-2 px-2.5 py-2"
       >
         <Trash2 className="h-4 w-4" />
         Remove website
-      </button>
+      </Button>
     </div>
   );
 }

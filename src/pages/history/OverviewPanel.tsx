@@ -13,6 +13,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "#/components/ui/alert-dialog";
+import { Button } from "#/components/ui/button";
 import { avgTokPerSec, avgCompletionTime } from "./helpers";
 
 function ClearHistoryDialog({ onConfirm }: { onConfirm: () => void }) {
@@ -21,9 +22,10 @@ function ClearHistoryDialog({ onConfirm }: { onConfirm: () => void }) {
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger
         render={
-          <button
+          <Button
             type="button"
-            className="border-border bg-muted/20 text-muted-foreground hover:border-border hover:bg-muted/30 hover:text-foreground flex cursor-pointer items-center justify-center gap-2 rounded-lg border px-4 py-2 text-[12px] transition-colors"
+            variant="outline"
+            className="border-border bg-muted/20 text-muted-foreground hover:border-border hover:bg-muted/30 hover:text-foreground gap-2 px-4 py-2 text-[12px] font-normal"
           />
         }
       >
@@ -65,9 +67,10 @@ function ResetAllDialog({ onConfirm }: { onConfirm: () => void }) {
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger
         render={
-          <button
+          <Button
             type="button"
-            className="border-destructive/30 bg-destructive/10 text-destructive/70 hover:border-destructive/50 hover:bg-destructive/20 hover:text-destructive flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border px-4 py-2 text-[12px] transition-colors"
+            variant="destructive"
+            className="border-destructive/30 bg-destructive/10 text-destructive/70 hover:border-destructive/50 hover:bg-destructive/20 hover:text-destructive w-full gap-2 px-4 py-2 text-[12px] font-normal"
           />
         }
       >

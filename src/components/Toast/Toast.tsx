@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
 import { cn } from "#/lib/utils";
+import { Button } from "#/components/ui/button";
 import type { Toast as ToastType } from "#/hooks/useToast";
 
 const variantStyles: Record<ToastType["variant"], string> = {
@@ -22,12 +23,15 @@ export function Toast({ toast, onDismiss }: ToastProps) {
       )}
     >
       <span className="flex-1 text-sm">{toast.message}</span>
-      <button
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-xs"
         onClick={() => onDismiss(toast.id)}
-        className="mt-0.5 cursor-pointer opacity-60 transition-opacity hover:opacity-100"
+        className="mt-0.5 opacity-60 hover:opacity-100"
       >
         <X className="h-3.5 w-3.5" />
-      </button>
+      </Button>
     </div>
   );
 }

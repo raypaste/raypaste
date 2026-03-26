@@ -16,6 +16,7 @@ import {
   ComboboxItem,
   ComboboxEmpty,
 } from "#/components/ui/combobox";
+import { Button } from "#/components/ui/button";
 
 export function SettingsPage() {
   const {
@@ -90,12 +91,14 @@ export function SettingsPage() {
         <div className="border-border bg-secondary rounded-lg border p-1">
           <div className="grid grid-cols-3 gap-1">
             {themeOptions.map(({ value, icon, label }) => (
-              <button
+              <Button
                 key={value}
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => setThemeMode(value)}
                 className={cn(
-                  "flex h-8 items-center justify-center gap-1.5 rounded-md text-sm transition-colors",
+                  "h-8 flex-1 gap-1.5 font-normal",
                   themeMode === value
                     ? "bg-background text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground",
@@ -103,7 +106,7 @@ export function SettingsPage() {
               >
                 {icon}
                 <span>{label}</span>
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -113,20 +116,22 @@ export function SettingsPage() {
       <section className="space-y-3">
         <h2 className="text-foreground text-sm font-semibold">AI Source</h2>
         <div className="grid grid-cols-2 gap-3">
-          <button
+          <Button
+            type="button"
+            variant="outline"
             onClick={() => setMode("direct")}
             className={cn(
-              "rounded-lg border p-4 text-left transition-colors",
+              "h-auto min-h-0 w-full min-w-0 shrink flex-col items-stretch rounded-lg p-4 text-left font-normal whitespace-normal",
               mode === "direct"
                 ? "border-primary bg-primary/10 text-foreground"
-                : "border-border bg-muted/40 text-muted-foreground hover:border-border/80",
+                : "border-border bg-muted/40 text-muted-foreground hover:border-border/80 hover:bg-muted/40",
             )}
           >
             <p className="text-sm font-medium">Direct to Provider</p>
             <p className="text-muted-foreground mt-1 text-xs">
               Your API key, your usage, your data stays local/private.
             </p>
-          </button>
+          </Button>
           <div
             className={cn(
               "relative rounded-lg border p-4 text-left",
@@ -151,18 +156,20 @@ export function SettingsPage() {
           <h2 className="text-foreground text-sm font-semibold">Provider</h2>
           <div className="flex gap-2">
             {Object.values(LLM_PROVIDER).map((p) => (
-              <button
+              <Button
                 key={p}
+                type="button"
+                variant="outline"
                 onClick={() => setProvider(p)}
                 className={cn(
-                  "cursor-pointer rounded-md border px-4 py-2 text-sm capitalize transition-colors",
+                  "capitalize",
                   provider === p
-                    ? "border-primary bg-primary/10 text-foreground"
+                    ? "border-primary bg-primary/10 hover:bg-primary/10 text-foreground"
                     : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground",
                 )}
               >
                 {p === LLM_PROVIDER.OpenRouter ? "OpenRouter" : "Cerebras"}
-              </button>
+              </Button>
             ))}
           </div>
         </section>
@@ -175,27 +182,29 @@ export function SettingsPage() {
             {provider === LLM_PROVIDER.OpenRouter ? "OpenRouter" : "Cerebras"}{" "}
             API Key
           </h2>
-          <div className="flex gap-2">
+          <div className="flex h-8 gap-2">
             <input
               type={showKey ? "text" : "password"}
               value={currentKey}
               onChange={(e) => setCurrentKey(e.target.value)}
               placeholder="sk-..."
               className={cn(
-                "border-border bg-muted/30 text-foreground flex-1 rounded-lg border px-3 py-2 text-xs",
+                "border-border bg-muted/30 text-foreground h-full flex-1 rounded-lg border px-3 py-2 text-xs",
                 "placeholder:text-muted-foreground focus:border-ring focus:outline-none",
               )}
             />
-            <button
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => setShowKey((v) => !v)}
-              className="border-border bg-muted/30 text-muted-foreground hover:text-foreground rounded-lg border px-3 py-2 transition-colors"
+              className="border-border bg-muted/30 text-muted-foreground hover:text-foreground h-full w-10 shrink-0"
             >
               {showKey ? (
                 <EyeOff className="h-4 w-4" />
               ) : (
                 <Eye className="h-4 w-4" />
               )}
-            </button>
+            </Button>
           </div>
         </section>
       )}
@@ -206,34 +215,38 @@ export function SettingsPage() {
           Completion Mode
         </h2>
         <div className="grid grid-cols-2 gap-3">
-          <button
+          <Button
+            type="button"
+            variant="outline"
             onClick={() => setReviewMode(false)}
             className={cn(
-              "cursor-pointer rounded-lg border p-4 text-left transition-colors",
+              "h-auto min-h-0 w-full min-w-0 shrink flex-col items-stretch rounded-lg p-4 text-left font-normal whitespace-normal",
               !reviewMode
-                ? "border-primary bg-primary/10 text-foreground"
-                : "border-border bg-muted/40 text-muted-foreground hover:border-primary/50 hover:text-foreground",
+                ? "border-primary bg-primary/10 hover:bg-primary/10 text-foreground"
+                : "border-border bg-muted/40 text-muted-foreground hover:border-primary/50 hover:bg-muted/40 hover:text-foreground",
             )}
           >
             <p className="text-sm font-medium">Instant</p>
             <p className="text-muted-foreground mt-1 text-xs">
               Replaces text immediately
             </p>
-          </button>
-          <button
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
             onClick={() => setReviewMode(true)}
             className={cn(
-              "cursor-pointer rounded-lg border p-4 text-left transition-colors",
+              "h-auto min-h-0 w-full min-w-0 shrink flex-col items-stretch rounded-lg p-4 text-left font-normal whitespace-normal",
               reviewMode
-                ? "border-primary bg-primary/10 text-foreground"
-                : "border-border bg-muted/40 text-muted-foreground hover:border-primary/50 hover:text-foreground",
+                ? "border-primary bg-primary/10 hover:bg-primary/10 text-foreground"
+                : "border-border bg-muted/40 text-muted-foreground hover:border-primary/50 hover:bg-muted/40 hover:text-foreground",
             )}
           >
             <p className="text-sm font-medium">Review</p>
             <p className="text-muted-foreground mt-1 text-xs">
               Preview before applying
             </p>
-          </button>
+          </Button>
         </div>
       </section>
 

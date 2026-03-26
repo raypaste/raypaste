@@ -1,4 +1,5 @@
 import { Settings } from "lucide-react";
+import { Button } from "#/components/ui/button";
 import { cn } from "#/lib/utils";
 import { SidebarNav, type Page } from "./SidebarNav";
 import { PromptsSection } from "./PromptsSection";
@@ -38,10 +39,13 @@ export function Sidebar({
 
       {/* Settings */}
       <div className="border-border border-t px-2 py-2">
-        <button
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
           onClick={() => onNavigate("settings")}
           className={cn(
-            "flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-[13px] font-medium transition-colors",
+            "h-auto w-full justify-start gap-2 px-2 py-1.5 text-[13px] font-medium",
             activePage === "settings"
               ? "bg-secondary text-foreground"
               : "text-muted-foreground hover:text-foreground",
@@ -49,7 +53,7 @@ export function Sidebar({
         >
           <Settings className="h-4 w-4 shrink-0" />
           <span>Settings</span>
-        </button>
+        </Button>
       </div>
     </aside>
   );

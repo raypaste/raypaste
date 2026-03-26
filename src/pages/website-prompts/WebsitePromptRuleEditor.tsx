@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { Trash2 } from "lucide-react";
 import { Input } from "#/components/ui/input";
+import { Button } from "#/components/ui/button";
 import { cn } from "#/lib/utils";
 
 interface WebsitePromptRuleEditorProps {
@@ -39,14 +40,16 @@ export function WebsitePromptRuleEditor({
           <p className="text-foreground text-sm font-medium">{title}</p>
           <p className="text-muted-foreground mt-1 text-sm">{description}</p>
         </div>
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           onClick={onDelete}
-          className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive rounded-lg p-2 transition-colors"
+          className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
           aria-label="Remove rule"
         >
           <Trash2 className="h-4 w-4" />
-        </button>
+        </Button>
       </div>
 
       <div className="mt-4 flex flex-col gap-3">
@@ -64,7 +67,8 @@ export function WebsitePromptRuleEditor({
             className={cn(
               "border-border bg-background text-foreground w-full px-3 shadow-none",
               "placeholder:text-muted-foreground focus-visible:border-ring",
-              inputDisabled && "bg-muted/40 text-muted-foreground disabled:opacity-100",
+              inputDisabled &&
+                "bg-muted/40 text-muted-foreground disabled:opacity-100",
             )}
           />
         </div>
