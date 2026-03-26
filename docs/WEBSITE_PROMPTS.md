@@ -21,6 +21,14 @@ Each **site** has:
 - **`rules`** — ordered conceptually as two kinds (see next section).
 - **Icon** — optional favicon for the list UI; fetching is implemented in Rust (`src-tauri/src/commands/website_icons.rs`, `fetch_website_icon`) and triggered from the frontend via `src/services/websiteIcons.ts` + `fetchWebsitePromptSiteIcon` in the store.
 
+### `Prompt.websitePromptSiteIds` (denormalized)
+
+Each **prompt** also stores **`websitePromptSiteIds`**: the ids of `WebsitePromptSite` rows that have **at least one rule** with `promptId` equal to that prompt’s `id`.
+
+- **Source of truth** for what runs on a page is still **`websitePromptSites` and rules** (`pickWebsitePromptMatch`, hotkey resolution). The array on `Prompt` is a **cached projection** for UI (e.g. sidebar “Unassigned” = no app assignment and empty `websitePromptSiteIds`) and must **not** be edited as the primary place to configure website mappings.
+- **Keeping it correct:** `recomputePromptWebsiteSiteIds` in `src/stores/promptsStore.ts` rebuilds the arrays from `websitePromptSites`. It runs on **`persist` merge** (loads old localStorage) and after **every store action** that changes rules or removes sites. If you add new code paths that mutate `websitePromptSites`, **call recompute** (or mirror the pattern used in existing actions) or the sidebar and any other consumer of `websitePromptSiteIds` will drift.
+- **Navigation:** Prompts that only appear under website rules may not show under the main Prompts sidebar; use **Edit prompt** next to a rule (see `WebsitePromptSiteEditor.tsx`) to open the full prompt editor.
+
 ## Rule kinds
 
 **`path-prefix`** — Applies when the **full tab URL** (string) **starts with** the rule’s stored value. Values are normalized to a full `https://…` URL on the site’s domain (no trailing slash on the path). Use this for specific sections (e.g. only `/docs/…`).

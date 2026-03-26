@@ -8,9 +8,14 @@ import { PromptAppSelector } from "#/pages/prompts/PromptAppSelector";
 interface PromptPageProps {
   promptId: string;
   onDeleted: () => void;
+  onNavigateToWebsitePromptSite: (siteId: string) => void;
 }
 
-export function PromptPage({ promptId, onDeleted }: PromptPageProps) {
+export function PromptPage({
+  promptId,
+  onDeleted,
+  onNavigateToWebsitePromptSite,
+}: PromptPageProps) {
   const {
     prompts,
     updatePrompt,
@@ -39,6 +44,7 @@ export function PromptPage({ promptId, onDeleted }: PromptPageProps) {
       .filter((rule) => rule.promptId === promptId)
       .map((rule) => ({
         id: rule.id,
+        siteId: site.id,
         pattern: rule.kind === "site" ? site.domain : rule.value,
       })),
   );
@@ -167,46 +173,55 @@ export function PromptPage({ promptId, onDeleted }: PromptPageProps) {
           ) : (
             <div className="flex flex-wrap gap-2">
               {websiteRules.map((rule) => (
-                <span
+                <Button
                   key={rule.id}
-                  className="border-border bg-muted/30 text-foreground rounded-full border px-2.5 py-1 text-xs"
+                  type="button"
+                  variant="outline"
+                  size="xs"
+                  onClick={() => onNavigateToWebsitePromptSite(rule.siteId)}
+                  className={cn(
+                    "border-border bg-muted/30 text-foreground hover:bg-muted/50 h-auto min-h-0 rounded-full px-2.5 py-1 font-normal active:translate-y-0",
+                  )}
                 >
                   {rule.pattern || "Untitled website prompt"}
-                </span>
+                </Button>
               ))}
             </div>
           )}
         </div>
 
-        <div>
+        <div className="border-border flex flex-col gap-1 border-t pt-4">
           <Button
-            variant="outline"
+            type="button"
+            variant="ghost"
             onClick={() => setDefaultPrompt(isDefault ? null : promptId)}
             className={cn(
-              "gap-1 px-2 py-1.5 text-xs font-medium",
+              "w-fit justify-start gap-2 px-2.5 py-2",
               isDefault
-                ? "border-primary/60 bg-primary/20 text-primary"
-                : "border-border bg-muted/30 text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+                ? "text-primary hover:bg-primary/10"
+                : "text-muted-foreground hover:bg-primary/10 hover:text-primary",
             )}
           >
-            <Star className={cn("h-3 w-3", isDefault && "fill-primary")} />
+            <Star
+              className={cn(
+                "h-4 w-4 shrink-0",
+                isDefault && "fill-primary text-primary",
+              )}
+            />
             {isDefault ? "Default Prompt" : "Set as Default Prompt"}
           </Button>
-        </div>
 
-        <div className="border-border border-t pt-4">
           <Button
+            type="button"
             variant={confirmDelete ? "destructive" : "ghost"}
             onClick={handleDelete}
             className={cn(
-              "gap-2 px-3 py-1.5 text-xs font-medium",
-              confirmDelete &&
-                "border-destructive/60 bg-destructive/20 hover:bg-destructive/25 border",
+              "w-fit justify-start gap-2 px-2.5 py-2",
               !confirmDelete &&
-                "text-muted-foreground/60 hover:bg-transparent hover:text-red-400",
+                "text-muted-foreground hover:bg-destructive/10 hover:text-destructive",
             )}
           >
-            <Trash2 className="h-3.5 w-3.5" />
+            <Trash2 className="h-4 w-4" />
             {confirmDelete ? "Click again to confirm delete" : "Delete prompt"}
           </Button>
         </div>

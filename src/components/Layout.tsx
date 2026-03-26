@@ -85,6 +85,9 @@ export function Layout() {
               key={selectedPromptId}
               promptId={selectedPromptId}
               onDeleted={() => handleNavigate("new-prompt")}
+              onNavigateToWebsitePromptSite={(siteId) =>
+                handleNavigate("website-prompts", undefined, siteId)
+              }
             />
           )}
           {activePage === "apps" && <AppsPage />}
@@ -92,6 +95,7 @@ export function Layout() {
             <WebsitePromptsPage
               selectedSiteId={selectedWebsitePromptSiteId}
               onSelectSite={setSelectedWebsitePromptSiteId}
+              onEditPrompt={(id) => handleNavigate("prompt", id)}
             />
           )}
           {activePage === "history" && <HistoryPage />}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ChevronRight, Star } from "lucide-react";
 import {
   Collapsible,
@@ -48,6 +48,20 @@ export function PromptsSection({
   const resolvedOpenGroups =
     openGroups ?? new Set(appGroups.slice(0, 5).map((g) => g.app.bundleId));
 
+  const websiteSitesWithPrompts = useMemo(
+    () =>
+      websitePromptSites.filter((site) =>
+        prompts.some((p) => p.websitePromptSiteIds.includes(site.id)),
+      ),
+    [websitePromptSites, prompts],
+  );
+
+  const [openWebsiteGroups, setOpenWebsiteGroups] =
+    useState<Set<string> | null>(null);
+  const resolvedOpenWebsiteGroups =
+    openWebsiteGroups ??
+    new Set(websiteSitesWithPrompts.slice(0, 5).map((s) => s.id));
+
   function toggleGroup(groupId: string) {
     setOpenGroups((prev) => {
       const next = new Set(
@@ -62,8 +76,27 @@ export function PromptsSection({
     });
   }
 
-  // Ungrouped: prompts with no app assignments
-  const ungroupedPrompts = prompts.filter((p) => p.appIds.length === 0);
+  function setWebsiteGroupOpen(siteId: string, nextOpen: boolean) {
+    setOpenWebsiteGroups((prev) => {
+      const next = new Set(
+        prev ?? websiteSitesWithPrompts.slice(0, 5).map((s) => s.id),
+      );
+      if (nextOpen) {
+        next.add(siteId);
+      } else {
+        next.delete(siteId);
+      }
+      return next;
+    });
+  }
+
+  const unassignedPrompts = useMemo(
+    () =>
+      prompts.filter(
+        (p) => p.appIds.length === 0 && p.websitePromptSiteIds.length === 0,
+      ),
+    [prompts],
+  );
 
   if (prompts.length === 0 && websitePromptSites.length === 0) {
     return null;
@@ -141,24 +174,24 @@ export function PromptsSection({
           );
         })}
 
-        {/* Ungrouped prompts */}
-        {ungroupedPrompts.length > 0 && (
+        {/* Unassigned: no app and no website rule referencing this prompt */}
+        {unassignedPrompts.length > 0 && (
           <Collapsible
-            open={resolvedOpenGroups.has("__ungrouped__")}
-            onOpenChange={() => toggleGroup("__ungrouped__")}
+            open={resolvedOpenGroups.has("__unassigned__")}
+            onOpenChange={() => toggleGroup("__unassigned__")}
           >
             <CollapsibleTrigger className="text-foreground/80 hover:bg-secondary hover:text-foreground flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors select-none">
               <ChevronRight
                 className={cn(
                   "h-3.5 w-3.5 shrink-0 transition-transform duration-150",
-                  resolvedOpenGroups.has("__ungrouped__") && "rotate-90",
+                  resolvedOpenGroups.has("__unassigned__") && "rotate-90",
                 )}
               />
-              <span>Ungrouped</span>
+              <span>Unassigned</span>
             </CollapsibleTrigger>
             <CollapsibleContent>
               <div className="mt-0.5 space-y-0.5">
-                {ungroupedPrompts.map((prompt) => (
+                {unassignedPrompts.map((prompt) => (
                   <PromptItem
                     key={prompt.id}
                     id={prompt.id}
@@ -178,39 +211,126 @@ export function PromptsSection({
           </p>
           <div className="space-y-0.5">
             {websitePromptSites.map((site) => {
+              const sitePrompts = prompts.filter((p) =>
+                p.websitePromptSiteIds.includes(site.id),
+              );
               const isSelected =
                 activePage === "website-prompts" &&
                 selectedWebsitePromptSiteId === site.id;
+              const isOpen = resolvedOpenWebsiteGroups.has(site.id);
+
+              if (sitePrompts.length === 0) {
+                return (
+                  <Button
+                    key={site.id}
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() =>
+                      onNavigate("website-prompts", undefined, site.id)
+                    }
+                    className={cn(
+                      "h-auto w-full justify-start gap-2 px-3 py-1.5 text-left text-[13px] font-normal",
+                      isSelected
+                        ? "bg-secondary text-foreground"
+                        : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+                    )}
+                  >
+                    <WebsitePromptSiteIcon
+                      iconSrc={site.iconSrc}
+                      iconStatus={site.iconStatus}
+                      domain={site.domain}
+                      className="h-6 w-6 rounded-md border-none bg-transparent shadow-none"
+                      iconClassName="h-4 w-4"
+                    />
+                    <span className="flex-1 truncate">
+                      {site.domain || "New website"}
+                    </span>
+                    <span className="bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 text-[10px] leading-none">
+                      {site.rules.length}
+                    </span>
+                  </Button>
+                );
+              }
+
               return (
-                <Button
+                <Collapsible
                   key={site.id}
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() =>
-                    onNavigate("website-prompts", undefined, site.id)
-                  }
-                  className={cn(
-                    "h-auto w-full justify-start gap-2 px-3 py-1.5 text-left text-[13px] font-normal",
-                    isSelected
-                      ? "bg-secondary text-foreground"
-                      : "text-muted-foreground hover:bg-secondary hover:text-foreground",
-                  )}
+                  open={isOpen}
+                  onOpenChange={(next) => setWebsiteGroupOpen(site.id, next)}
                 >
-                  <WebsitePromptSiteIcon
-                    iconSrc={site.iconSrc}
-                    iconStatus={site.iconStatus}
-                    domain={site.domain}
-                    className="h-6 w-6 rounded-md border-none bg-transparent shadow-none"
-                    iconClassName="h-4 w-4"
-                  />
-                  <span className="flex-1 truncate">
-                    {site.domain || "New website"}
-                  </span>
-                  <span className="bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 text-[10px] leading-none">
-                    {site.rules.length}
-                  </span>
-                </Button>
+                  <div
+                    className={cn(
+                      "flex w-full min-w-0 items-stretch gap-0 rounded-md",
+                      isSelected ? "bg-secondary" : "hover:bg-secondary/80",
+                    )}
+                  >
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        onNavigate("website-prompts", undefined, site.id)
+                      }
+                      className={cn(
+                        "h-auto min-w-0 flex-1 justify-start gap-2 rounded-r-none px-3 py-1.5 text-left text-[13px] font-normal",
+                        isSelected
+                          ? "text-foreground hover:bg-transparent"
+                          : "text-muted-foreground hover:text-foreground hover:bg-transparent",
+                      )}
+                    >
+                      <WebsitePromptSiteIcon
+                        iconSrc={site.iconSrc}
+                        iconStatus={site.iconStatus}
+                        domain={site.domain}
+                        className="h-6 w-6 rounded-md border-none bg-transparent shadow-none"
+                        iconClassName="h-4 w-4"
+                      />
+                      <span className="flex-1 truncate">
+                        {site.domain || "New website"}
+                      </span>
+                      <span className="bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 text-[10px] leading-none">
+                        {site.rules.length}
+                      </span>
+                    </Button>
+                    <CollapsibleTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className={cn(
+                          "h-auto w-8 shrink-0 rounded-l-none px-0",
+                          isSelected
+                            ? "text-foreground hover:bg-transparent"
+                            : "text-foreground/80 hover:text-foreground hover:bg-transparent",
+                        )}
+                        aria-label={
+                          isOpen
+                            ? "Hide prompts for this site"
+                            : "Show prompts for this site"
+                        }
+                      >
+                        <ChevronRight
+                          className={cn(
+                            "h-3.5 w-3.5 shrink-0 transition-transform duration-150",
+                            isOpen && "rotate-90",
+                          )}
+                        />
+                      </Button>
+                    </CollapsibleTrigger>
+                  </div>
+                  <CollapsibleContent>
+                    <div className="mt-0.5 space-y-0.5">
+                      {sitePrompts.map((prompt) => (
+                        <PromptItem
+                          key={prompt.id}
+                          id={prompt.id}
+                          name={prompt.name}
+                        />
+                      ))}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               );
             })}
           </div>

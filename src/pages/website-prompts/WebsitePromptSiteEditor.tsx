@@ -33,6 +33,7 @@ interface WebsitePromptSiteEditorProps {
   ) => void;
   removeWebsitePromptSiteRule: (siteId: string, ruleId: string) => void;
   onRequestRemoveSite: () => void;
+  onEditPrompt: (promptId: string) => void;
 }
 
 export function WebsitePromptSiteEditor({
@@ -49,6 +50,7 @@ export function WebsitePromptSiteEditor({
   updateWebsitePromptSiteRule,
   removeWebsitePromptSiteRule,
   onRequestRemoveSite,
+  onEditPrompt,
 }: WebsitePromptSiteEditorProps) {
   const domainInputValue = getDomainDraft(selectedSite.id, selectedSite.domain);
 
@@ -155,6 +157,18 @@ export function WebsitePromptSiteEditor({
                     }
                   />
                 }
+                promptBelowRow={
+                  rule.promptId ? (
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="text-muted-foreground h-8 shrink-0 px-0"
+                      onClick={() => onEditPrompt(rule.promptId)}
+                    >
+                      Edit prompt
+                    </Button>
+                  ) : null
+                }
                 footer={
                   !rule.promptId ? (
                     <p className="text-xs text-amber-600">
@@ -162,6 +176,7 @@ export function WebsitePromptSiteEditor({
                     </p>
                   ) : null
                 }
+                assignedPromptId={rule.promptId}
                 onDelete={() =>
                   removeWebsitePromptSiteRule(selectedSite.id, rule.id)
                 }
@@ -228,6 +243,18 @@ export function WebsitePromptSiteEditor({
                       }
                     />
                   }
+                  promptBelowRow={
+                    rule.promptId ? (
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="text-muted-foreground h-8 shrink-0 px-0"
+                        onClick={() => onEditPrompt(rule.promptId)}
+                      >
+                        Edit prompt
+                      </Button>
+                    ) : null
+                  }
                   footer={
                     isInvalid ? (
                       <p className="text-xs text-amber-600">
@@ -240,6 +267,8 @@ export function WebsitePromptSiteEditor({
                       </p>
                     ) : null
                   }
+                  assignedPromptId={rule.promptId}
+                  committedInputValue={rule.value}
                   onDelete={() =>
                     removeWebsitePromptSiteRule(selectedSite.id, rule.id)
                   }

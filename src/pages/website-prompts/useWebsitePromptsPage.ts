@@ -9,11 +9,13 @@ import { fetchWebsiteIcon } from "#/services/websiteIcons";
 export interface WebsitePromptsPageProps {
   selectedSiteId: string | null;
   onSelectSite: (siteId: string | null) => void;
+  onEditPrompt: (promptId: string) => void;
 }
 
 export function useWebsitePromptsPage({
   selectedSiteId,
   onSelectSite,
+  onEditPrompt,
 }: WebsitePromptsPageProps) {
   const {
     prompts,
@@ -137,6 +139,7 @@ export function useWebsitePromptsPage({
     websitePromptSites,
     hasPrompts,
     selectedSite,
+    onEditPrompt,
     removingSiteId,
     setRemovingSiteId,
     pendingRemoveSite,
