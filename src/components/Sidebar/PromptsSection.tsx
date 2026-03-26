@@ -179,6 +179,11 @@ export function PromptsSection({
               placeholder="Search prompts…"
               className="h-8 pl-8 text-sm"
               aria-label="Search prompts"
+              name="prompts-sidebar-search"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="none"
+              spellCheck={false}
             />
           </div>
         </div>
