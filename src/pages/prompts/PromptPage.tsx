@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Star, Trash2, Lock } from "lucide-react";
 import { cn } from "#/lib/utils";
+import { Button } from "#/components/ui/button";
 import { usePromptsStore } from "#/stores";
 import { PromptAppSelector } from "#/pages/prompts/PromptAppSelector";
 
@@ -140,18 +141,9 @@ export function PromptPage({ promptId, onDeleted }: PromptPageProps) {
         </div>
 
         {dirty && (
-          <button
-            onClick={handleSave}
-            disabled={!name.trim() || !text.trim()}
-            className={cn(
-              "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
-              name.trim() && text.trim()
-                ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                : "bg-muted/40 text-muted-foreground cursor-not-allowed",
-            )}
-          >
+          <Button onClick={handleSave} disabled={!name.trim() || !text.trim()}>
             Save changes
-          </button>
+          </Button>
         )}
 
         <PromptAppSelector
@@ -187,10 +179,11 @@ export function PromptPage({ promptId, onDeleted }: PromptPageProps) {
         </div>
 
         <div>
-          <button
+          <Button
+            variant="outline"
             onClick={() => setDefaultPrompt(isDefault ? null : promptId)}
             className={cn(
-              "flex items-center gap-1 rounded-lg border px-2 py-1.5 text-xs font-medium",
+              "gap-1 px-2 py-1.5 text-xs font-medium",
               isDefault
                 ? "border-primary/60 bg-primary/20 text-primary"
                 : "border-border bg-muted/30 text-muted-foreground hover:bg-muted/50 hover:text-foreground",
@@ -198,22 +191,24 @@ export function PromptPage({ promptId, onDeleted }: PromptPageProps) {
           >
             <Star className={cn("h-3 w-3", isDefault && "fill-primary")} />
             {isDefault ? "Default Prompt" : "Set as Default Prompt"}
-          </button>
+          </Button>
         </div>
 
         <div className="border-border border-t pt-4">
-          <button
+          <Button
+            variant={confirmDelete ? "destructive" : "ghost"}
             onClick={handleDelete}
             className={cn(
-              "flex cursor-pointer items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium",
-              confirmDelete
-                ? "border-destructive/60 bg-destructive/20 text-destructive border"
-                : "text-muted-foreground/60 hover:text-red-400",
+              "gap-2 px-3 py-1.5 text-xs font-medium",
+              confirmDelete &&
+                "border-destructive/60 bg-destructive/20 hover:bg-destructive/25 border",
+              !confirmDelete &&
+                "text-muted-foreground/60 hover:bg-transparent hover:text-red-400",
             )}
           >
             <Trash2 className="h-3.5 w-3.5" />
             {confirmDelete ? "Click again to confirm delete" : "Delete prompt"}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

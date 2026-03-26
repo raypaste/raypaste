@@ -20,7 +20,7 @@ export function WebsitePromptSiteIcon({
   return (
     <div
       className={cn(
-        "bg-muted/40 text-primary flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-white/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]",
+        "bg-muted/40 text-primary border-muted/90 flex h-9 w-9 shrink-0 items-center justify-center rounded-md border",
         className,
       )}
       aria-label={domain || "Website icon"}

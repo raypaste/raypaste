@@ -1,4 +1,5 @@
 import { LayoutGrid, BookOpen, SquarePen, Globe } from "lucide-react";
+import { Button } from "#/components/ui/button";
 import { cn } from "#/lib/utils";
 
 export type Page =
@@ -31,11 +32,14 @@ export function SidebarNav({ activePage, onNavigate }: SidebarNavProps) {
   return (
     <nav className="ml-1 space-y-0.5">
       {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
-        <button
+        <Button
           key={id}
+          type="button"
+          variant="ghost"
+          size="sm"
           onClick={() => onNavigate(id)}
           className={cn(
-            "flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-[13px] font-medium transition-colors",
+            "h-auto w-full justify-start gap-2 px-2 py-1.5 text-[13px] font-medium",
             activePage === id
               ? "bg-secondary text-foreground"
               : "text-muted-foreground hover:text-foreground",
@@ -43,7 +47,7 @@ export function SidebarNav({ activePage, onNavigate }: SidebarNavProps) {
         >
           <Icon className="h-4 w-4 shrink-0" />
           <span>{label}</span>
-        </button>
+        </Button>
       ))}
     </nav>
   );

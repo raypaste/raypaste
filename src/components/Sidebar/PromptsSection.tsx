@@ -5,6 +5,7 @@ import {
   CollapsibleTrigger,
   CollapsibleContent,
 } from "#/components/ui/collapsible";
+import { Button } from "#/components/ui/button";
 import { cn } from "#/lib/utils";
 import { usePromptsStore, useAppsStore } from "#/stores";
 import type { Page } from "./SidebarNav";
@@ -72,10 +73,13 @@ export function PromptsSection({
     const isSelected = selectedPromptId === id;
     const isDefault = defaultPromptId === id;
     return (
-      <button
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
         onClick={() => onNavigate("prompt", id)}
         className={cn(
-          "flex w-full cursor-pointer items-center gap-1.5 rounded-md py-1 pr-2 pl-8 text-left text-[13px] transition-colors",
+          "h-auto w-full justify-start gap-1.5 py-1 pr-2 pl-8 text-left text-[13px] font-normal",
           isSelected
             ? "bg-secondary text-foreground"
             : "text-muted-foreground hover:bg-secondary hover:text-foreground",
@@ -85,7 +89,7 @@ export function PromptsSection({
         {isDefault && (
           <Star className="fill-primary text-primary mr-1.5 h-2.5 w-2.5 shrink-0" />
         )}
-      </button>
+      </Button>
     );
   }
 
@@ -178,13 +182,16 @@ export function PromptsSection({
                 activePage === "website-prompts" &&
                 selectedWebsitePromptSiteId === site.id;
               return (
-                <button
+                <Button
                   key={site.id}
+                  type="button"
+                  variant="ghost"
+                  size="sm"
                   onClick={() =>
                     onNavigate("website-prompts", undefined, site.id)
                   }
                   className={cn(
-                    "flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-[13px] transition-colors",
+                    "h-auto w-full justify-start gap-2 px-3 py-1.5 text-left text-[13px] font-normal",
                     isSelected
                       ? "bg-secondary text-foreground"
                       : "text-muted-foreground hover:bg-secondary hover:text-foreground",
@@ -203,7 +210,7 @@ export function PromptsSection({
                   <span className="bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 text-[10px] leading-none">
                     {site.rules.length}
                   </span>
-                </button>
+                </Button>
               );
             })}
           </div>

@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { emit, listen } from "@tauri-apps/api/event";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
+import { Button } from "#/components/ui/button";
 import { cn } from "#/lib/utils";
 import {
   REVIEW_STORAGE_KEY,
@@ -281,44 +282,47 @@ export function ReviewPage() {
       {/* Footer */}
       <div className="flex shrink-0 items-center justify-between border-t border-white/8 bg-black/45 px-6 py-4 backdrop-blur-xl">
         {isLoading ? (
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={handleCancel}
-            className="inline-flex items-center gap-2 rounded-lg border border-white/12 bg-white/5 px-3 py-2 text-sm font-medium text-neutral-200 transition-colors hover:border-white/18 hover:bg-white/8"
+            className="gap-2 rounded-lg border border-white/12 bg-white/5 px-3 py-2 text-sm font-medium text-neutral-200 shadow-none hover:border-white/18 hover:bg-white/8 hover:text-neutral-200 focus-visible:border-white/25 focus-visible:ring-white/30"
           >
             <span>Cancel</span>
             <kbd className="rounded-md border border-white/20 bg-black/20 px-2 py-0.5 font-mono text-[11px] text-neutral-100">
               Esc
             </kbd>
-          </button>
+          </Button>
         ) : (
           <>
-            <button
+            <Button
               type="button"
+              variant="ghost"
               onClick={handleDismiss}
-              className="inline-flex items-center gap-2 rounded-lg border border-white/12 bg-white/5 px-3 py-2 text-sm font-medium text-neutral-200 transition-colors hover:border-white/18 hover:bg-white/8"
+              className="gap-2 rounded-lg border border-white/12 bg-white/5 px-3 py-2 text-sm font-medium text-neutral-200 shadow-none hover:border-white/18 hover:bg-white/8 hover:text-neutral-200 focus-visible:border-white/25 focus-visible:ring-white/30"
             >
               <span>Dismiss</span>
               <kbd className="rounded-md border border-white/20 bg-black/20 px-2 py-0.5 font-mono text-[11px] text-neutral-100">
                 Esc
               </kbd>
-            </button>
+            </Button>
             {!isError && (
               <div className="flex items-center gap-3">
                 <span className="hidden text-xs text-neutral-500 sm:block">
                   {shortcuts.applyAlt}
                 </span>
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
                   onClick={handleApply}
                   disabled={applied}
-                  className="inline-flex items-center gap-2 rounded-xl bg-neutral-100 px-4 py-2 text-sm font-semibold text-neutral-950 transition-colors hover:bg-white disabled:opacity-50"
+                  className="gap-2 rounded-xl border-0 bg-neutral-100 px-4 py-2 text-sm font-semibold text-neutral-950 shadow-none hover:bg-white hover:text-neutral-950 focus-visible:ring-neutral-400/40 disabled:opacity-50"
                 >
                   <span>Apply</span>
                   <kbd className="rounded-md border border-black/15 bg-black/10 px-2 py-0.5 font-mono text-[11px] text-neutral-900">
                     {shortcuts.apply}
                   </kbd>
-                </button>
+                </Button>
               </div>
             )}
           </>

@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import {
+  filterComboboxItems,
+  useComboboxSearchDirty,
+} from "#/hooks/useComboboxSearchDirty";
 import { useAppsStore } from "#/stores";
 import type { InstalledApp } from "#/stores";
 import { useAppIcons } from "#/hooks/useAppIcons";
@@ -35,6 +39,8 @@ export function PromptAppSelector({
 }: PromptAppSelectorProps) {
   const { apps, setApps } = useAppsStore();
   const [query, setQuery] = useState("");
+  const { searchDirty, onOpenChange, markSearchDirtyFromInput } =
+    useComboboxSearchDirty();
 
   useEffect(() => {
     if (apps.length > 0) {
@@ -54,9 +60,12 @@ export function PromptAppSelector({
     .map((id) => apps.find((a) => a.bundleId === id))
     .filter(Boolean) as InstalledApp[];
 
-  const filteredApps = query
-    ? apps.filter((a) => a.name.toLowerCase().includes(query.toLowerCase()))
-    : apps;
+  const filteredApps = filterComboboxItems(
+    apps,
+    query,
+    searchDirty,
+    (a) => a.name,
+  );
 
   return (
     <div className="space-y-2">
@@ -67,6 +76,7 @@ export function PromptAppSelector({
         multiple
         value={assignedAppIds}
         onValueChange={(newIds) => onChange(newIds ?? [])}
+        onOpenChange={onOpenChange}
         onInputValueChange={(val) => setQuery(val)}
       >
         <ComboboxChips
@@ -85,6 +95,7 @@ export function PromptAppSelector({
           <ComboboxChipsInput
             placeholder="Search and add apps…"
             className="flex-1"
+            onInput={markSearchDirtyFromInput}
           />
           <ComboboxTrigger className="text-muted-foreground ml-auto px-1" />
         </ComboboxChips>

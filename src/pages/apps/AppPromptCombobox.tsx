@@ -1,4 +1,9 @@
 import { useState } from "react";
+import { cn } from "#/lib/utils";
+import {
+  filterComboboxItems,
+  useComboboxSearchDirty,
+} from "#/hooks/useComboboxSearchDirty";
 import type { Prompt } from "#/stores";
 import {
   Combobox,
@@ -16,6 +21,8 @@ interface AppPromptComboboxProps {
   placeholder?: string;
   /** When false, the clear control is hidden (e.g. URL rules must keep a prompt). */
   showClear?: boolean;
+  /** Merged onto `ComboboxInput` (e.g. `w-full max-w-none` for form layouts). */
+  inputClassName?: string;
 }
 
 export function AppPromptCombobox({
@@ -24,15 +31,21 @@ export function AppPromptCombobox({
   onAssign,
   placeholder = "No prompt",
   showClear = true,
+  inputClassName,
 }: AppPromptComboboxProps) {
   const [query, setQuery] = useState("");
-
-  const filtered = query
-    ? prompts.filter((p) => p.name.toLowerCase().includes(query.toLowerCase()))
-    : prompts;
+  const { searchDirty, onOpenChange, markSearchDirtyFromInput } =
+    useComboboxSearchDirty();
 
   const selectedName =
     prompts.find((p) => p.id === assignedPromptId)?.name ?? "";
+
+  const filtered = filterComboboxItems(
+    prompts,
+    query,
+    searchDirty,
+    (p) => p.name,
+  );
 
   return (
     <Combobox
@@ -40,13 +53,15 @@ export function AppPromptCombobox({
       onValueChange={(name) => {
         onAssign(prompts.find((p) => p.name === name)?.id ?? "");
       }}
+      onOpenChange={onOpenChange}
       onInputValueChange={setQuery}
     >
       <ComboboxInput
         placeholder={placeholder}
         showTrigger
         showClear={showClear && !!assignedPromptId}
-        className="max-w-64 min-w-40"
+        className={cn("max-w-64 min-w-40", inputClassName)}
+        onInput={markSearchDirtyFromInput}
       />
       <ComboboxContent className="min-w-56">
         {filtered.length === 0 && (

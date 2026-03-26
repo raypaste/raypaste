@@ -1,5 +1,8 @@
+import type { KeyboardEvent } from "react";
 import { XCircle } from "lucide-react";
 import type { CompletionEntry } from "#/services/db";
+import { Button, buttonVariants } from "#/components/ui/button";
+import { cn } from "#/lib/utils";
 import { timeAgo, appColor } from "./helpers";
 import { StatusIcon } from "./StatusIcon";
 
@@ -24,11 +27,23 @@ export function EntryCard({ row, appName, onClick, onDelete }: EntryCardProps) {
             ? "Built-in"
             : null;
 
+  function handleRowKeyDown(e: KeyboardEvent) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onClick();
+    }
+  }
+
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
-      className="group/card border-border hover:bg-muted/40 w-full cursor-pointer border-b px-4 pt-3 pb-1.5 text-left transition-colors"
+      onKeyDown={handleRowKeyDown}
+      className={cn(
+        buttonVariants({ variant: "ghost" }),
+        "group/card border-border hover:bg-muted/40 h-auto min-h-0 w-full flex-col items-stretch rounded-none border-b px-4 pt-3 pb-1.5 text-left font-normal",
+      )}
     >
       {/* App + time */}
       <div className="mb-1 flex items-center justify-between gap-2">
@@ -89,17 +104,19 @@ export function EntryCard({ row, appName, onClick, onDelete }: EntryCardProps) {
 
       {/* Delete (hover) */}
       <div className="mt-0.5 flex justify-end opacity-0 transition-opacity group-hover/card:opacity-100">
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon-xs"
           onClick={(e) => {
             e.stopPropagation();
             onDelete();
           }}
-          className="text-muted-foreground/60 rounded p-0.5 transition-colors hover:cursor-pointer hover:text-red-400"
+          className="text-muted-foreground/60 hover:text-red-400"
         >
           <XCircle size={12} />
-        </button>
+        </Button>
       </div>
-    </button>
+    </div>
   );
 }

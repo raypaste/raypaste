@@ -13,12 +13,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "#/components/ui/alert-dialog";
+import { Button } from "#/components/ui/button";
 import { avgTokPerSec, avgCompletionTime } from "./helpers";
-import {
-  DIALOG_CONTENT_CLS,
-  DIALOG_CANCEL_CLS,
-  DIALOG_ACTION_DESTRUCTIVE_CLS,
-} from "#/pages/history/constants";
 
 function ClearHistoryDialog({ onConfirm }: { onConfirm: () => void }) {
   const [open, setOpen] = useState(false);
@@ -26,16 +22,17 @@ function ClearHistoryDialog({ onConfirm }: { onConfirm: () => void }) {
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger
         render={
-          <button
+          <Button
             type="button"
-            className="border-border bg-muted/20 text-muted-foreground hover:border-border hover:bg-muted/30 hover:text-foreground flex cursor-pointer items-center justify-center gap-2 rounded-lg border px-4 py-2 text-[12px] transition-colors"
+            variant="outline"
+            className="border-border bg-muted/20 text-muted-foreground hover:border-border hover:bg-muted/30 hover:text-foreground gap-2 px-4 py-2 text-[12px] font-normal"
           />
         }
       >
         <X size={12} />
         Clear history
       </AlertDialogTrigger>
-      <AlertDialogContent size="sm" className={DIALOG_CONTENT_CLS}>
+      <AlertDialogContent size="sm">
         <AlertDialogHeader>
           <AlertDialogMedia className="bg-muted/40">
             <X className="text-muted-foreground" />
@@ -49,15 +46,12 @@ function ClearHistoryDialog({ onConfirm }: { onConfirm: () => void }) {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel className={DIALOG_CANCEL_CLS}>
-            Cancel
-          </AlertDialogCancel>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
             onClick={() => {
               onConfirm();
               setOpen(false);
             }}
-            className={DIALOG_ACTION_DESTRUCTIVE_CLS}
           >
             Clear
           </AlertDialogAction>
@@ -73,16 +67,17 @@ function ResetAllDialog({ onConfirm }: { onConfirm: () => void }) {
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger
         render={
-          <button
+          <Button
             type="button"
-            className="border-destructive/30 bg-destructive/10 text-destructive/70 hover:border-destructive/50 hover:bg-destructive/20 hover:text-destructive flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border px-4 py-2 text-[12px] transition-colors"
+            variant="destructive"
+            className="border-destructive/30 bg-destructive/10 text-destructive/70 hover:border-destructive/50 hover:bg-destructive/20 hover:text-destructive w-full gap-2 px-4 py-2 text-[12px] font-normal"
           />
         }
       >
         <Trash2 size={12} />
         Reset all data
       </AlertDialogTrigger>
-      <AlertDialogContent size="sm" className={DIALOG_CONTENT_CLS}>
+      <AlertDialogContent size="sm">
         <AlertDialogHeader>
           <AlertDialogMedia className="bg-red-500/10">
             <Trash2 className="text-red-400" />
@@ -97,15 +92,12 @@ function ResetAllDialog({ onConfirm }: { onConfirm: () => void }) {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel className={DIALOG_CANCEL_CLS}>
-            Cancel
-          </AlertDialogCancel>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
             onClick={() => {
               onConfirm();
               setOpen(false);
             }}
-            className={DIALOG_ACTION_DESTRUCTIVE_CLS}
           >
             Reset everything
           </AlertDialogAction>
