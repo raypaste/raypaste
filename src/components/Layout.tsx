@@ -92,6 +92,7 @@ export function Layout() {
             <WebsitePromptsPage
               selectedSiteId={selectedWebsitePromptSiteId}
               onSelectSite={setSelectedWebsitePromptSiteId}
+              onEditPrompt={(id) => handleNavigate("prompt", id)}
             />
           )}
           {activePage === "history" && <HistoryPage />}

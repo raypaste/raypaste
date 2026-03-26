@@ -189,7 +189,7 @@ export function PromptPage({ promptId, onDeleted }: PromptPageProps) {
                 : "border-border bg-muted/30 text-muted-foreground hover:bg-muted/50 hover:text-foreground",
             )}
           >
-            <Star className={cn("h-3 w-3", isDefault && "fill-primary")} />
+            <Star className={cn("h-2.5 w-2.5", isDefault && "fill-primary")} />
             {isDefault ? "Default Prompt" : "Set as Default Prompt"}
           </Button>
         </div>

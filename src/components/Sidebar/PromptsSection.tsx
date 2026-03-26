@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ChevronRight, Star } from "lucide-react";
 import {
   Collapsible,
@@ -62,8 +62,13 @@ export function PromptsSection({
     });
   }
 
-  // Ungrouped: prompts with no app assignments
-  const ungroupedPrompts = prompts.filter((p) => p.appIds.length === 0);
+  const unassignedPrompts = useMemo(
+    () =>
+      prompts.filter(
+        (p) => p.appIds.length === 0 && p.websitePromptSiteIds.length === 0,
+      ),
+    [prompts],
+  );
 
   if (prompts.length === 0 && websitePromptSites.length === 0) {
     return null;
@@ -141,24 +146,24 @@ export function PromptsSection({
           );
         })}
 
-        {/* Ungrouped prompts */}
-        {ungroupedPrompts.length > 0 && (
+        {/* Unassigned: no app and no website rule referencing this prompt */}
+        {unassignedPrompts.length > 0 && (
           <Collapsible
-            open={resolvedOpenGroups.has("__ungrouped__")}
-            onOpenChange={() => toggleGroup("__ungrouped__")}
+            open={resolvedOpenGroups.has("__unassigned__")}
+            onOpenChange={() => toggleGroup("__unassigned__")}
           >
             <CollapsibleTrigger className="text-foreground/80 hover:bg-secondary hover:text-foreground flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors select-none">
               <ChevronRight
                 className={cn(
                   "h-3.5 w-3.5 shrink-0 transition-transform duration-150",
-                  resolvedOpenGroups.has("__ungrouped__") && "rotate-90",
+                  resolvedOpenGroups.has("__unassigned__") && "rotate-90",
                 )}
               />
-              <span>Ungrouped</span>
+              <span>Unassigned</span>
             </CollapsibleTrigger>
             <CollapsibleContent>
               <div className="mt-0.5 space-y-0.5">
-                {ungroupedPrompts.map((prompt) => (
+                {unassignedPrompts.map((prompt) => (
                   <PromptItem
                     key={prompt.id}
                     id={prompt.id}

@@ -33,6 +33,7 @@ interface WebsitePromptSiteEditorProps {
   ) => void;
   removeWebsitePromptSiteRule: (siteId: string, ruleId: string) => void;
   onRequestRemoveSite: () => void;
+  onEditPrompt: (promptId: string) => void;
 }
 
 export function WebsitePromptSiteEditor({
@@ -49,6 +50,7 @@ export function WebsitePromptSiteEditor({
   updateWebsitePromptSiteRule,
   removeWebsitePromptSiteRule,
   onRequestRemoveSite,
+  onEditPrompt,
 }: WebsitePromptSiteEditorProps) {
   const domainInputValue = getDomainDraft(selectedSite.id, selectedSite.domain);
 
@@ -149,11 +151,27 @@ export function WebsitePromptSiteEditor({
                     placeholder="Choose prompt"
                     inputClassName="w-full min-w-0 max-w-none"
                     onAssign={(promptId) =>
-                      updateWebsitePromptSiteRule(selectedSite.id, rule.id, {
-                        promptId,
-                      })
+                      updateWebsitePromptSiteRule(
+                        selectedSite.id,
+                        rule.id,
+                        {
+                          promptId,
+                        },
+                      )
                     }
                   />
+                }
+                promptBelowRow={
+                  rule.promptId ? (
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="text-muted-foreground h-8 shrink-0 px-0"
+                      onClick={() => onEditPrompt(rule.promptId)}
+                    >
+                      Edit prompt
+                    </Button>
+                  ) : null
                 }
                 footer={
                   !rule.promptId ? (
@@ -222,11 +240,27 @@ export function WebsitePromptSiteEditor({
                       placeholder="Choose prompt"
                       inputClassName="w-full min-w-0 max-w-none"
                       onAssign={(promptId) =>
-                        updateWebsitePromptSiteRule(selectedSite.id, rule.id, {
-                          promptId,
-                        })
+                        updateWebsitePromptSiteRule(
+                          selectedSite.id,
+                          rule.id,
+                          {
+                            promptId,
+                          },
+                        )
                       }
                     />
+                  }
+                  promptBelowRow={
+                    rule.promptId ? (
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="text-muted-foreground h-8 shrink-0 px-0"
+                        onClick={() => onEditPrompt(rule.promptId)}
+                      >
+                        Edit prompt
+                      </Button>
+                    ) : null
                   }
                   footer={
                     isInvalid ? (

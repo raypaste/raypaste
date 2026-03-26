@@ -1,12 +1,28 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+/**
+ * Invariants for website prompt ↔ prompt linkage (see `docs/WEBSITE_PROMPTS.md`):
+ *
+ * - **Source of truth:** `websitePromptSites[].rules[].promptId` (and site ids on each site).
+ * - **Denormalized cache:** `Prompt.websitePromptSiteIds` lists site ids that have at least one
+ *   rule with `promptId === this.id`. Do not hand-edit in the UI; it is derived.
+ * - **Keep in sync:** Any store code that mutates `websitePromptSites` (rules or removal of sites)
+ *   must end with `recomputePromptWebsiteSiteIds` on the prompts array (see existing actions).
+ *   `persist` `merge` also recomputes so older localStorage without this field stays correct.
+ * - **Hotkey / matching** reads `websitePromptSites` only, not `websitePromptSiteIds`.
+ */
 export interface Prompt {
   id: string;
   name: string;
   text: string;
   notes: string;
   appIds: string[];
+  /**
+   * Denormalized cache: `WebsitePromptSite.id` values where some rule has `promptId === id`.
+   * Must stay aligned with `websitePromptSites`; see module comment above.
+   */
+  websitePromptSiteIds: string[];
 }
 
 export type PromptSource = "website" | "app" | "default" | "builtin";
@@ -209,6 +225,27 @@ function pickWebsitePromptMatch(
   return null;
 }
 
+/**
+ * Rebuilds `websitePromptSiteIds` on every prompt from the current `websitePromptSites` graph.
+ *
+ * Call this after any change to rules or site list that could alter `rule.promptId` links, and
+ * in `persist` `merge` after hydrating from disk. If you add a new action that writes
+ * `websitePromptSites` without going through an existing action, add a recompute there too.
+ */
+export function recomputePromptWebsiteSiteIds(
+  prompts: Prompt[],
+  websitePromptSites: WebsitePromptSite[],
+): Prompt[] {
+  return prompts.map((p) => ({
+    ...p,
+    websitePromptSiteIds: websitePromptSites
+      .filter((site) =>
+        site.rules.some((r) => r.promptId && r.promptId === p.id),
+      )
+      .map((s) => s.id),
+  }));
+}
+
 interface PromptsState {
   prompts: Prompt[];
   defaultPromptId: string | null;
@@ -271,6 +308,7 @@ export const usePromptsStore = create<PromptsState>()(
           text: "Make this text more formal",
           notes: "",
           appIds: [],
+          websitePromptSiteIds: [],
         },
       ],
       defaultPromptId: null,
@@ -279,7 +317,14 @@ export const usePromptsStore = create<PromptsState>()(
         set((state) => ({
           prompts: [
             ...state.prompts,
-            { id: id ?? crypto.randomUUID(), name, text, notes, appIds: [] },
+            {
+              id: id ?? crypto.randomUUID(),
+              name,
+              text,
+              notes,
+              appIds: [],
+              websitePromptSiteIds: [],
+            },
           ],
         })),
       updatePrompt: (id, updates) =>
@@ -289,15 +334,22 @@ export const usePromptsStore = create<PromptsState>()(
           ),
         })),
       deletePrompt: (id) =>
-        set((state) => ({
-          prompts: state.prompts.filter((p) => p.id !== id),
-          defaultPromptId:
-            state.defaultPromptId === id ? null : state.defaultPromptId,
-          websitePromptSites: state.websitePromptSites.map((site) => ({
+        set((state) => {
+          const websitePromptSites = state.websitePromptSites.map((site) => ({
             ...site,
             rules: site.rules.filter((rule) => rule.promptId !== id),
-          })),
-        })),
+          }));
+          const prompts = recomputePromptWebsiteSiteIds(
+            state.prompts.filter((p) => p.id !== id),
+            websitePromptSites,
+          );
+          return {
+            prompts,
+            defaultPromptId:
+              state.defaultPromptId === id ? null : state.defaultPromptId,
+            websitePromptSites,
+          };
+        }),
       assignAppToPrompt: (promptId, appId) =>
         set((state) => ({
           prompts: state.prompts.map((p) => {
@@ -322,23 +374,30 @@ export const usePromptsStore = create<PromptsState>()(
       setDefaultPrompt: (id) => set({ defaultPromptId: id }),
       addWebsitePromptSite: () => {
         const id = crypto.randomUUID();
-        set((state) => ({
-          websitePromptSites: [
+        set((state) => {
+          const websitePromptSites: WebsitePromptSite[] = [
             ...state.websitePromptSites,
             {
               id,
               domain: "",
               iconSrc: null,
-              iconStatus: "idle",
+              iconStatus: "idle" satisfies WebsitePromptSiteIconStatus,
               rules: [],
             },
-          ],
-        }));
+          ];
+          return {
+            websitePromptSites,
+            prompts: recomputePromptWebsiteSiteIds(
+              state.prompts,
+              websitePromptSites,
+            ),
+          };
+        });
         return id;
       },
       updateWebsitePromptSite: (id, updates) =>
-        set((state) => ({
-          websitePromptSites: state.websitePromptSites.map((site) => {
+        set((state) => {
+          const websitePromptSites = state.websitePromptSites.map((site) => {
             if (site.id !== id) return site;
             const nextDomain =
               updates.domain !== undefined
@@ -372,18 +431,32 @@ export const usePromptsStore = create<PromptsState>()(
                 ),
               ),
             };
-          }),
-        })),
+          });
+          return {
+            websitePromptSites,
+            prompts: recomputePromptWebsiteSiteIds(
+              state.prompts,
+              websitePromptSites,
+            ),
+          };
+        }),
       removeWebsitePromptSite: (id) =>
-        set((state) => ({
-          websitePromptSites: state.websitePromptSites.filter(
+        set((state) => {
+          const websitePromptSites = state.websitePromptSites.filter(
             (site) => site.id !== id,
-          ),
-        })),
+          );
+          return {
+            websitePromptSites,
+            prompts: recomputePromptWebsiteSiteIds(
+              state.prompts,
+              websitePromptSites,
+            ),
+          };
+        }),
       addWebsitePromptSiteRule: (siteId, rule = {}) => {
         const ruleId = crypto.randomUUID();
-        set((state) => ({
-          websitePromptSites: state.websitePromptSites.map((site) => {
+        set((state) => {
+          const websitePromptSites = state.websitePromptSites.map((site) => {
             if (site.id !== siteId) return site;
             const nextRule: WebsitePromptSiteRule = {
               id: ruleId,
@@ -400,13 +473,20 @@ export const usePromptsStore = create<PromptsState>()(
               ...site,
               rules: sortWebsitePromptRules([...site.rules, nextRule]),
             };
-          }),
-        }));
+          });
+          return {
+            websitePromptSites,
+            prompts: recomputePromptWebsiteSiteIds(
+              state.prompts,
+              websitePromptSites,
+            ),
+          };
+        });
         return ruleId;
       },
       updateWebsitePromptSiteRule: (siteId, ruleId, updates) =>
-        set((state) => ({
-          websitePromptSites: state.websitePromptSites.map((site) => {
+        set((state) => {
+          const websitePromptSites = state.websitePromptSites.map((site) => {
             if (site.id !== siteId) {
               return site;
             }
@@ -438,19 +518,33 @@ export const usePromptsStore = create<PromptsState>()(
             });
 
             return { ...site, rules: sortWebsitePromptRules(rules) };
-          }),
-        })),
+          });
+          return {
+            websitePromptSites,
+            prompts: recomputePromptWebsiteSiteIds(
+              state.prompts,
+              websitePromptSites,
+            ),
+          };
+        }),
       removeWebsitePromptSiteRule: (siteId, ruleId) =>
-        set((state) => ({
-          websitePromptSites: state.websitePromptSites.map((site) =>
+        set((state) => {
+          const websitePromptSites = state.websitePromptSites.map((site) =>
             site.id === siteId
               ? {
                   ...site,
                   rules: site.rules.filter((rule) => rule.id !== ruleId),
                 }
               : site,
-          ),
-        })),
+          );
+          return {
+            websitePromptSites,
+            prompts: recomputePromptWebsiteSiteIds(
+              state.prompts,
+              websitePromptSites,
+            ),
+          };
+        }),
       fetchWebsitePromptSiteIcon: async (siteId, fetcher) => {
         const site = get().websitePromptSites.find(
           (item) => item.id === siteId,
@@ -541,6 +635,8 @@ export const usePromptsStore = create<PromptsState>()(
     }),
     {
       name: "raypaste-prompts",
+      // Migration + invariant: recompute denormalized `websitePromptSiteIds` after load so
+      // persisted data predating that field, or any drift, cannot break sidebar "Unassigned".
       merge: (persisted, current) => {
         const p = (persisted as PersistedPromptsState | undefined) ?? {};
         const websitePromptSites = (
@@ -549,10 +645,21 @@ export const usePromptsStore = create<PromptsState>()(
           .map((site) => normalizeWebsitePromptSite(site) ?? site)
           .filter((site) => site.domain || site.rules.length > 0);
 
+        const mergedPrompts = p.prompts?.length ? p.prompts : current.prompts;
+        const prompts = recomputePromptWebsiteSiteIds(
+          mergedPrompts.map((pr) => ({
+            ...pr,
+            appIds: pr.appIds ?? [],
+            websitePromptSiteIds: pr.websitePromptSiteIds ?? [],
+          })),
+          websitePromptSites,
+        );
+
         return {
           ...current,
           ...p,
           websitePromptSites,
+          prompts,
         };
       },
     },

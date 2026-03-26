@@ -34,6 +34,7 @@ export function WebsitePromptsPage(props: WebsitePromptsPageProps) {
     removeWebsitePromptSiteRule,
     normalizeDomainInput,
     normalizePathPrefixInput,
+    onEditPrompt,
   } = useWebsitePromptsPage(props);
 
   const { onSelectSite } = props;
@@ -78,6 +79,7 @@ export function WebsitePromptsPage(props: WebsitePromptsPageProps) {
                 updateWebsitePromptSiteRule={updateWebsitePromptSiteRule}
                 removeWebsitePromptSiteRule={removeWebsitePromptSiteRule}
                 onRequestRemoveSite={() => setRemovingSiteId(selectedSite.id)}
+                onEditPrompt={onEditPrompt}
               />
             )}
           </div>

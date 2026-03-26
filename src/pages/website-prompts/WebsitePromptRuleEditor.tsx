@@ -26,6 +26,8 @@ interface WebsitePromptRuleEditorProps {
   onInputChange?: (value: string) => void;
   onInputBlur?: (value: string) => void;
   promptCombobox: ReactNode;
+  /** Shown on its own row below the Prompt / Label grid (e.g. “Edit prompt”). */
+  promptBelowRow?: ReactNode;
   footer?: ReactNode;
   onDelete: () => void;
 }
@@ -41,6 +43,7 @@ export function WebsitePromptRuleEditor({
   onInputChange,
   onInputBlur,
   promptCombobox,
+  promptBelowRow,
   footer,
   onDelete,
 }: WebsitePromptRuleEditorProps) {
@@ -140,6 +143,10 @@ export function WebsitePromptRuleEditor({
             />
           </div>
         </div>
+
+        {promptBelowRow ? (
+          <div className="flex justify-start">{promptBelowRow}</div>
+        ) : null}
       </div>
 
       {footer && <div className="mt-3">{footer}</div>}

@@ -38,9 +38,9 @@ export function RemoveWebsiteDialog({
               : "Remove this website?"}
           </AlertDialogTitle>
           <AlertDialogDescription className="text-muted-foreground">
-            This removes the website connection to your prompts for this site.
-            Your saved prompts are not deleted. To delete a specific prompt,
-            open that prompt from the sidebar and delete it there.
+            This removes the website rules for this site. Your saved prompts are
+            not deleted. To delete a prompt, open it from the sidebar or use
+            Edit prompt next to a rule, then delete it in the prompt editor.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
