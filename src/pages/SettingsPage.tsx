@@ -100,7 +100,11 @@ export function SettingsPage() {
                 className={cn(
                   "h-8 flex-1 gap-1.5 font-normal",
                   themeMode === value
-                    ? "bg-background text-foreground shadow-sm hover:bg-background dark:bg-muted dark:text-foreground dark:shadow-none dark:ring-1 dark:ring-border/80 dark:hover:bg-muted"
+                    ? [
+                        "bg-background text-foreground shadow-sm hover:bg-background",
+                        // secondary and muted are the same hex in .dark — use input + border so the pill reads clearly
+                        "dark:border-border dark:bg-input dark:text-foreground dark:shadow-md dark:hover:bg-input/90 dark:hover:text-foreground",
+                      ]
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
