@@ -31,7 +31,7 @@ export function DetailDialog({ row, onClose, appName }: DetailDialogProps) {
 
   return (
     <Dialog open={row !== null} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-card text-card-foreground ring-border flex max-h-[80vh] w-full max-w-3xl flex-col ring-1 sm:max-w-3xl">
+      <DialogContent className="bg-card text-card-foreground ring-border flex max-h-[90vh] w-full max-w-4xl flex-col ring-1 sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle className="text-foreground text-sm font-semibold">
             Details
@@ -125,11 +125,11 @@ export function DetailDialog({ row, onClose, appName }: DetailDialogProps) {
             </div>
 
             {hasFinal && (
-              <div className="flex flex-col overflow-hidden">
+              <div className="flex shrink-0 flex-col overflow-hidden">
                 <p className="text-muted-foreground/60 mb-1.5 shrink-0 text-[10px] font-semibold tracking-widest uppercase">
                   Final (edited)
                 </p>
-                <p className="text-foreground/80 max-h-32 overflow-y-auto leading-relaxed whitespace-pre-wrap">
+                <p className="text-foreground/80 max-h-72 min-h-48 overflow-y-auto leading-relaxed whitespace-pre-wrap">
                   {row.finalText}
                 </p>
               </div>
