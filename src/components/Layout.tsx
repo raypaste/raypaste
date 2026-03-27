@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Sidebar } from "#/components/Sidebar/Sidebar";
 import { TitleBar } from "#/components/TitleBar";
-import { ToastContainer } from "#/components/Toast/ToastContainer";
+import { Toaster } from "#/components/ui/sonner";
 import type { Page } from "#/components/Sidebar/SidebarNav";
 import { NewPromptPage } from "#/pages/prompts/NewPromptPage";
 import { PromptPage } from "#/pages/prompts/PromptPage";
@@ -102,7 +102,7 @@ export function Layout() {
           {activePage === "settings" && <SettingsPage />}
         </div>
       </main>
-      <ToastContainer />
+      <Toaster position="bottom-right" closeButton />
     </div>
   );
 }
