@@ -3,7 +3,7 @@ import { XCircle } from "lucide-react";
 import type { CompletionEntry } from "#/services/db";
 import { Button, buttonVariants } from "#/components/ui/button";
 import { cn } from "#/lib/utils";
-import { timeAgo, appColor } from "./helpers";
+import { timeAgo, appColor, promptSourceDisplayLabel } from "./helpers";
 import { StatusIcon } from "./StatusIcon";
 
 interface EntryCardProps {
@@ -16,16 +16,7 @@ interface EntryCardProps {
 export function EntryCard({ row, appName, onClick, onDelete }: EntryCardProps) {
   const name = appName(row.appId);
   const initial = name.charAt(0).toUpperCase();
-  const promptSourceLabel =
-    row.promptSource === "website"
-      ? "Website"
-      : row.promptSource === "app"
-        ? "App"
-        : row.promptSource === "default"
-          ? "Default"
-          : row.promptSource === "builtin"
-            ? "Built-in"
-            : null;
+  const promptSourceLabel = promptSourceDisplayLabel(row.promptSource);
 
   function handleRowKeyDown(e: KeyboardEvent) {
     if (e.key === "Enter" || e.key === " ") {
@@ -83,7 +74,7 @@ export function EntryCard({ row, appName, onClick, onDelete }: EntryCardProps) {
       <div className="mb-1 flex flex-wrap items-center gap-1.5">
         {promptSourceLabel && (
           <span className="bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 text-[10px]">
-            {promptSourceLabel} prompt
+            {promptSourceLabel}
           </span>
         )}
         {row.matchedWebsitePattern && (

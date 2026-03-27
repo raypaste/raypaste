@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { avgTokPerSec, avgCompletionTime } from "./helpers";
+import {
+  avgTokPerSec,
+  avgCompletionTime,
+  findWebsiteSiteIdForCompletion,
+} from "./helpers";
 import type { UsageStatsRow } from "#/services/db";
 
 function row(partial: Partial<UsageStatsRow>): UsageStatsRow {
@@ -29,5 +33,56 @@ describe("history helpers", () => {
     expect(
       avgCompletionTime(row({ totalCompletions: 2, totalCompletionMs: 5000 })),
     ).toBe("2.50s");
+  });
+
+  it("findWebsiteSiteIdForCompletion resolves site rule by domain pattern", () => {
+    const siteId = findWebsiteSiteIdForCompletion(
+      [
+        {
+          id: "s1",
+          domain: "example.com",
+          iconSrc: null,
+          iconStatus: "idle",
+          rules: [
+            {
+              id: "r1",
+              kind: "site",
+              value: "",
+              promptId: "p1",
+              label: "",
+            },
+          ],
+        },
+      ],
+      "example.com",
+      "p1",
+    );
+    expect(siteId).toBe("s1");
+  });
+
+  it("findWebsiteSiteIdForCompletion resolves path-prefix match", () => {
+    const prefix = "https://example.com/inbox";
+    const siteId = findWebsiteSiteIdForCompletion(
+      [
+        {
+          id: "s2",
+          domain: "example.com",
+          iconSrc: null,
+          iconStatus: "idle",
+          rules: [
+            {
+              id: "r2",
+              kind: "path-prefix",
+              value: prefix,
+              promptId: "p2",
+              label: "",
+            },
+          ],
+        },
+      ],
+      prefix,
+      "p2",
+    );
+    expect(siteId).toBe("s2");
   });
 });

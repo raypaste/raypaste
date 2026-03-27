@@ -61,49 +61,58 @@ export function Layout() {
     : undefined;
 
   return (
-    <div className="relative flex h-screen w-screen overflow-hidden rounded-xl shadow-2xl">
-      <TitleBar />
-      <Sidebar
-        activePage={activePage}
-        selectedPromptId={selectedPromptId}
-        selectedWebsitePromptSiteId={selectedWebsitePromptSiteId}
-        onNavigate={handleNavigate}
-      />
-      <main className="bg-background flex flex-1 flex-col overflow-hidden">
-        <div className="px-6 pt-[20px] pb-4">
-          <h1 className="text-foreground/80 text-base font-semibold capitalize">
-            {getPageTitle(activePage, selectedPromptName)}
-          </h1>
-        </div>
+    <>
+      <div className="relative flex h-screen w-screen overflow-hidden rounded-xl shadow-2xl">
+        <TitleBar />
+        <Sidebar
+          activePage={activePage}
+          selectedPromptId={selectedPromptId}
+          selectedWebsitePromptSiteId={selectedWebsitePromptSiteId}
+          onNavigate={handleNavigate}
+        />
+        <main className="bg-background flex flex-1 flex-col overflow-hidden">
+          <div className="px-6 pt-[20px] pb-4">
+            <h1 className="text-foreground/80 text-base font-semibold capitalize">
+              {getPageTitle(activePage, selectedPromptName)}
+            </h1>
+          </div>
 
-        <div className="flex-1 overflow-auto">
-          {activePage === "new-prompt" && (
-            <NewPromptPage onCreated={(id) => handleNavigate("prompt", id)} />
-          )}
-          {activePage === "prompt" && selectedPromptId && (
-            <PromptPage
-              key={selectedPromptId}
-              promptId={selectedPromptId}
-              onDeleted={() => handleNavigate("new-prompt")}
-              onNavigateToWebsitePromptSite={(siteId) =>
-                handleNavigate("website-prompts", undefined, siteId)
-              }
-            />
-          )}
-          {activePage === "apps" && <AppsPage />}
-          {activePage === "website-prompts" && (
-            <WebsitePromptsPage
-              selectedSiteId={selectedWebsitePromptSiteId}
-              onSelectSite={setSelectedWebsitePromptSiteId}
-              onEditPrompt={(id) => handleNavigate("prompt", id)}
-            />
-          )}
-          {activePage === "history" && <HistoryPage />}
-          {activePage === "settings" && <SettingsPage />}
-        </div>
-      </main>
-      <Toaster position="bottom-right" closeButton />
-    </div>
+          <div className="flex-1 overflow-auto">
+            {activePage === "new-prompt" && (
+              <NewPromptPage onCreated={(id) => handleNavigate("prompt", id)} />
+            )}
+            {activePage === "prompt" && selectedPromptId && (
+              <PromptPage
+                key={selectedPromptId}
+                promptId={selectedPromptId}
+                onDeleted={() => handleNavigate("new-prompt")}
+                onNavigateToWebsitePromptSite={(siteId) =>
+                  handleNavigate("website-prompts", undefined, siteId)
+                }
+              />
+            )}
+            {activePage === "apps" && <AppsPage />}
+            {activePage === "website-prompts" && (
+              <WebsitePromptsPage
+                selectedSiteId={selectedWebsitePromptSiteId}
+                onSelectSite={setSelectedWebsitePromptSiteId}
+                onEditPrompt={(id) => handleNavigate("prompt", id)}
+              />
+            )}
+            {activePage === "history" && (
+              <HistoryPage
+                onNavigateToPrompt={(id) => handleNavigate("prompt", id)}
+                onNavigateToWebsiteSite={(siteId) =>
+                  handleNavigate("website-prompts", undefined, siteId)
+                }
+              />
+            )}
+            {activePage === "settings" && <SettingsPage />}
+          </div>
+        </main>
+      </div>
+      <Toaster position="bottom-right" closeButton richColors />
+    </>
   );
 }
 

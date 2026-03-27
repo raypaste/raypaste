@@ -1,4 +1,48 @@
 import type { UsageStatsRow } from "#/services/db";
+import type { WebsitePromptSite } from "#/stores";
+
+/** Resolves a website prompt site id from persisted completion fields (for deep-linking). */
+export function findWebsiteSiteIdForCompletion(
+  sites: WebsitePromptSite[],
+  matchedPattern: string | null | undefined,
+  promptId: string,
+): string | null {
+  if (!matchedPattern) {
+    return null;
+  }
+  for (const site of sites) {
+    for (const rule of site.rules) {
+      if (rule.promptId !== promptId) {
+        continue;
+      }
+      if (rule.kind === "path-prefix" && rule.value === matchedPattern) {
+        return site.id;
+      }
+      if (rule.kind === "site" && site.domain === matchedPattern) {
+        return site.id;
+      }
+    }
+  }
+  return null;
+}
+
+/** Full label for history UI (e.g. "Website prompt"). */
+export function promptSourceDisplayLabel(
+  source: string | null | undefined,
+): string | null {
+  switch (source) {
+    case "website":
+      return "Website prompt";
+    case "app":
+      return "App prompt";
+    case "default":
+      return "Default prompt";
+    case "builtin":
+      return "Built-in prompt";
+    default:
+      return null;
+  }
+}
 
 export function timeAgo(ts: number): string {
   const diff = Date.now() - ts;

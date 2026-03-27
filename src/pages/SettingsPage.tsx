@@ -101,9 +101,9 @@ export function SettingsPage() {
                   "h-8 flex-1 gap-1.5 font-normal",
                   themeMode === value
                     ? [
-                        "bg-background text-foreground shadow-sm hover:bg-background",
+                        "bg-background text-foreground hover:bg-background shadow-sm",
                         // secondary and muted are the same hex in .dark — use input + border so the pill reads clearly
-                        "dark:border-border dark:bg-input dark:text-foreground dark:shadow-md dark:hover:bg-input/90 dark:hover:text-foreground",
+                        "dark:border-border dark:bg-input dark:text-foreground dark:hover:bg-input/90 dark:hover:text-foreground dark:shadow-md",
                       ]
                     : "text-muted-foreground hover:text-foreground",
                 )}
