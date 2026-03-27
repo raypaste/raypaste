@@ -100,7 +100,11 @@ export function SettingsPage() {
                 className={cn(
                   "h-8 flex-1 gap-1.5 font-normal",
                   themeMode === value
-                    ? "bg-background text-foreground shadow-sm"
+                    ? [
+                        "bg-background text-foreground hover:bg-background shadow-sm",
+                        // secondary and muted are the same hex in .dark — use input + border so the pill reads clearly
+                        "dark:border-border dark:bg-input dark:text-foreground dark:hover:bg-input/90 dark:hover:text-foreground dark:shadow-md",
+                      ]
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
@@ -123,8 +127,8 @@ export function SettingsPage() {
             className={cn(
               "h-auto min-h-0 w-full min-w-0 shrink flex-col items-stretch rounded-lg p-4 text-left font-normal whitespace-normal",
               mode === "direct"
-                ? "border-primary bg-primary/10 text-foreground"
-                : "border-border bg-muted/40 text-muted-foreground hover:border-border/80 hover:bg-muted/40",
+                ? "border-primary bg-primary/10 text-foreground hover:bg-primary/15 active:bg-primary/20 dark:border-primary/50 dark:bg-primary/20 dark:hover:bg-primary/25 dark:active:bg-primary/30"
+                : "border-border bg-muted/40 text-muted-foreground hover:border-border/80 hover:bg-muted/40 dark:bg-muted/60 dark:hover:bg-muted/60",
             )}
           >
             <p className="text-sm font-medium">Direct to Provider</p>
@@ -164,8 +168,8 @@ export function SettingsPage() {
                 className={cn(
                   "capitalize",
                   provider === p
-                    ? "border-primary bg-primary/10 hover:bg-primary/10 text-foreground"
-                    : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground",
+                    ? "border-primary bg-primary/10 text-foreground hover:bg-primary/15 active:bg-primary/20 dark:border-primary/50 dark:bg-primary/20 dark:hover:bg-primary/25 dark:active:bg-primary/30"
+                    : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground dark:hover:bg-input/40",
                 )}
               >
                 {p === LLM_PROVIDER.OpenRouter ? "OpenRouter" : "Cerebras"}
@@ -197,7 +201,7 @@ export function SettingsPage() {
               type="button"
               variant="outline"
               onClick={() => setShowKey((v) => !v)}
-              className="border-border bg-muted/30 text-muted-foreground hover:text-foreground h-full w-10 shrink-0"
+              className="border-border bg-muted/30 text-muted-foreground hover:text-foreground dark:hover:bg-input/45 dark:active:bg-input/55 h-full w-10 shrink-0"
             >
               {showKey ? (
                 <EyeOff className="h-4 w-4" />
@@ -222,8 +226,8 @@ export function SettingsPage() {
             className={cn(
               "h-auto min-h-0 w-full min-w-0 shrink flex-col items-stretch rounded-lg p-4 text-left font-normal whitespace-normal",
               !reviewMode
-                ? "border-primary bg-primary/10 hover:bg-primary/10 text-foreground"
-                : "border-border bg-muted/40 text-muted-foreground hover:border-primary/50 hover:bg-muted/40 hover:text-foreground",
+                ? "border-primary bg-primary/10 text-foreground hover:bg-primary/15 active:bg-primary/20 dark:border-primary/50 dark:bg-primary/20 dark:hover:bg-primary/25 dark:active:bg-primary/30"
+                : "border-border bg-muted/40 text-muted-foreground hover:border-primary/50 hover:bg-muted/40 hover:text-foreground dark:bg-muted/60 dark:hover:bg-muted/60",
             )}
           >
             <p className="text-sm font-medium">Instant</p>
@@ -238,8 +242,8 @@ export function SettingsPage() {
             className={cn(
               "h-auto min-h-0 w-full min-w-0 shrink flex-col items-stretch rounded-lg p-4 text-left font-normal whitespace-normal",
               reviewMode
-                ? "border-primary bg-primary/10 hover:bg-primary/10 text-foreground"
-                : "border-border bg-muted/40 text-muted-foreground hover:border-primary/50 hover:bg-muted/40 hover:text-foreground",
+                ? "border-primary bg-primary/10 text-foreground hover:bg-primary/15 active:bg-primary/20 dark:border-primary/50 dark:bg-primary/20 dark:hover:bg-primary/25 dark:active:bg-primary/30"
+                : "border-border bg-muted/40 text-muted-foreground hover:border-primary/50 hover:bg-muted/40 hover:text-foreground dark:bg-muted/60 dark:hover:bg-muted/60",
             )}
           >
             <p className="text-sm font-medium">Review</p>

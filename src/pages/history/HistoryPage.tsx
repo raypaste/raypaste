@@ -29,7 +29,15 @@ import { OverviewPanel } from "#/pages/history/OverviewPanel";
 
 const LIST_LIMIT = 200;
 
-export function HistoryPage() {
+interface HistoryPageProps {
+  onNavigateToPrompt?: (promptId: string) => void;
+  onNavigateToWebsiteSite?: (siteId: string) => void;
+}
+
+export function HistoryPage({
+  onNavigateToPrompt,
+  onNavigateToWebsiteSite,
+}: HistoryPageProps = {}) {
   const [rows, setRows] = useState<CompletionEntry[]>([]);
   const [stats, setStats] = useState<Awaited<
     ReturnType<typeof getUsageStats>
@@ -181,6 +189,8 @@ export function HistoryPage() {
         row={detailRow}
         onClose={() => setDetailRow(null)}
         appName={appName}
+        onNavigateToPrompt={onNavigateToPrompt}
+        onNavigateToWebsiteSite={onNavigateToWebsiteSite}
       />
 
       {/* Delete confirmation */}

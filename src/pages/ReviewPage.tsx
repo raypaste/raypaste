@@ -1,8 +1,10 @@
 import { useEffect, useState, useCallback } from "react";
+import { Plus } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import { emit, listen } from "@tauri-apps/api/event";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { Button } from "#/components/ui/button";
+import { Kbd, KbdGroup } from "#/components/ui/kbd";
 import { cn } from "#/lib/utils";
 import {
   REVIEW_STORAGE_KEY,
@@ -21,14 +23,6 @@ function loadStorage(): PendingReviewStorage | null {
   }
 }
 
-function getShortcutLabel() {
-  const isMac = navigator.userAgent.toLowerCase().includes("mac");
-  return {
-    apply: isMac ? "Cmd + Enter" : "Ctrl + Enter",
-    applyAlt: isMac ? "Ctrl + Enter also works" : "Cmd + Enter also works",
-  };
-}
-
 type Phase =
   | { kind: "loading" }
   | {
@@ -43,7 +37,9 @@ type Phase =
 export function ReviewPage() {
   const initial = loadStorage();
   const win = getCurrentWebviewWindow();
-  const shortcuts = getShortcutLabel();
+  const isMac = navigator.userAgent.toLowerCase().includes("mac");
+  const applyShortcutKbdClass =
+    "border-neutral-200/90 bg-white font-mono text-[11px] text-neutral-900 shadow-sm dark:border-white/25 dark:bg-white dark:text-neutral-950";
 
   const [text, setText] = useState(
     initial?.loading === true
@@ -188,18 +184,18 @@ export function ReviewPage() {
 
   return (
     <div
-      className="flex h-screen w-screen flex-col overflow-hidden rounded-[20px] bg-neutral-950/96"
+      className="bg-background/95 text-foreground flex h-screen w-screen flex-col overflow-hidden rounded-lg backdrop-blur-xl"
       style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
     >
       {/* Title bar */}
       <div
-        className="flex shrink-0 items-center justify-between border-b border-white/8 px-6 py-4"
+        className="border-border flex shrink-0 items-center justify-between border-b px-6 py-4"
         style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
       >
         <div className="flex items-center gap-2">
           {isLoading && (
             <svg
-              className="size-3.5 shrink-0 animate-spin text-neutral-400"
+              className="text-muted-foreground size-3.5 shrink-0 animate-spin"
               fill="none"
               viewBox="0 0 24 24"
             >
@@ -218,12 +214,12 @@ export function ReviewPage() {
               />
             </svg>
           )}
-          <span className="text-xs font-semibold tracking-[0.02em] text-neutral-200">
+          <span className="text-foreground text-xs font-semibold tracking-[0.02em]">
             {isLoading ? "Generating…" : isError ? "Error" : "Review Response"}
           </span>
         </div>
         <div
-          className="flex items-center gap-2 text-[11px] text-neutral-500"
+          className="text-muted-foreground flex items-center gap-2 text-[11px]"
           style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
         >
           {!isLoading && wordCount > 0 && (
@@ -231,7 +227,7 @@ export function ReviewPage() {
               <span>{wordCount} words</span>
               {durationSec && (
                 <>
-                  <span className="text-neutral-700">·</span>
+                  <span className="text-muted-foreground/60">·</span>
                   <span>{durationSec}s</span>
                 </>
               )}
@@ -242,25 +238,25 @@ export function ReviewPage() {
 
       {/* Original text */}
       {originalText && (
-        <div className="shrink-0 border-b border-white/6 px-6 py-4">
-          <p className="mb-2 text-[10px] font-semibold tracking-[0.18em] text-neutral-500 uppercase">
+        <div className="border-border/80 shrink-0 border-b px-6 py-4">
+          <p className="text-muted-foreground mb-2 text-[10px] font-semibold tracking-[0.18em] uppercase">
             Original
           </p>
-          <p className="line-clamp-2 text-sm leading-relaxed text-neutral-400">
+          <p className="text-muted-foreground line-clamp-2 text-sm leading-relaxed">
             {originalText}
           </p>
         </div>
       )}
 
       {/* Completion editor / error */}
-      <div className="flex flex-1 flex-col overflow-hidden bg-neutral-950/96 px-6 py-5">
+      <div className="bg-background/95 flex flex-1 flex-col overflow-hidden px-6 py-5">
         {isError ? (
           <p className="text-sm leading-relaxed text-red-400">
             {phase.message}
           </p>
         ) : (
           <>
-            <p className="mb-2 shrink-0 text-[10px] font-semibold tracking-[0.18em] text-neutral-400 uppercase">
+            <p className="text-muted-foreground mb-2 shrink-0 text-[10px] font-semibold tracking-[0.18em] uppercase">
               Completion
             </p>
             <textarea
@@ -269,9 +265,9 @@ export function ReviewPage() {
               readOnly={isLoading}
               autoFocus={!isLoading}
               className={cn(
-                "flex-1 resize-none bg-transparent text-[15px] leading-[1.75] text-neutral-50",
-                "placeholder:text-neutral-600 focus:outline-none",
-                isLoading && "cursor-default text-neutral-300",
+                "text-foreground flex-1 resize-none bg-transparent text-[15px] leading-[1.75]",
+                "placeholder:text-muted-foreground focus:outline-none",
+                isLoading && "text-muted-foreground cursor-default",
               )}
               placeholder={isLoading ? "" : undefined}
             />
@@ -280,18 +276,18 @@ export function ReviewPage() {
       </div>
 
       {/* Footer */}
-      <div className="flex shrink-0 items-center justify-between border-t border-white/8 bg-black/45 px-6 py-4 backdrop-blur-xl">
+      <div className="border-border bg-muted/35 dark:bg-muted/25 flex shrink-0 items-center justify-between border-t px-6 py-4 backdrop-blur-xl">
         {isLoading ? (
           <Button
             type="button"
             variant="ghost"
             onClick={handleCancel}
-            className="gap-2 rounded-lg border border-white/12 bg-white/5 px-3 py-2 text-sm font-medium text-neutral-200 shadow-none hover:border-white/18 hover:bg-white/8 hover:text-neutral-200 focus-visible:border-white/25 focus-visible:ring-white/30"
+            className="border-border bg-muted/60 text-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring/50 gap-2 rounded-lg border px-3 py-2 text-sm font-medium shadow-none"
           >
             <span>Cancel</span>
-            <kbd className="rounded-md border border-white/20 bg-black/20 px-2 py-0.5 font-mono text-[11px] text-neutral-100">
-              Esc
-            </kbd>
+            <Kbd className="border-border bg-background font-mono text-[11px]">
+              esc
+            </Kbd>
           </Button>
         ) : (
           <>
@@ -299,29 +295,71 @@ export function ReviewPage() {
               type="button"
               variant="ghost"
               onClick={handleDismiss}
-              className="gap-2 rounded-lg border border-white/12 bg-white/5 px-3 py-2 text-sm font-medium text-neutral-200 shadow-none hover:border-white/18 hover:bg-white/8 hover:text-neutral-200 focus-visible:border-white/25 focus-visible:ring-white/30"
+              className="border-border bg-muted/60 text-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring/50 gap-2 rounded-lg border px-3 py-2 text-sm font-medium shadow-none"
             >
               <span>Dismiss</span>
-              <kbd className="rounded-md border border-white/20 bg-black/20 px-2 py-0.5 font-mono text-[11px] text-neutral-100">
-                Esc
-              </kbd>
+              <Kbd className="border-border bg-background font-mono text-[11px]">
+                esc
+              </Kbd>
             </Button>
             {!isError && (
               <div className="flex items-center gap-3">
-                <span className="hidden text-xs text-neutral-500 sm:block">
-                  {shortcuts.applyAlt}
+                <span className="text-muted-foreground hidden items-center gap-1.5 text-xs sm:flex">
+                  {isMac ? (
+                    <>
+                      <KbdGroup>
+                        <Kbd>⌃</Kbd>
+                        <Plus
+                          className="text-muted-foreground/70 size-3 shrink-0"
+                          aria-hidden
+                        />
+                        <Kbd>↩</Kbd>
+                      </KbdGroup>
+                      <span>also works</span>
+                    </>
+                  ) : (
+                    <>
+                      <KbdGroup>
+                        <Kbd>Cmd</Kbd>
+                        <Plus
+                          className="text-muted-foreground/70 size-3 shrink-0"
+                          aria-hidden
+                        />
+                        <Kbd>Enter</Kbd>
+                      </KbdGroup>
+                      <span>also works</span>
+                    </>
+                  )}
                 </span>
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="default"
                   onClick={handleApply}
                   disabled={applied}
-                  className="gap-2 rounded-xl border-0 bg-neutral-100 px-4 py-2 text-sm font-semibold text-neutral-950 shadow-none hover:bg-white hover:text-neutral-950 focus-visible:ring-neutral-400/40 disabled:opacity-50"
+                  className="focus-visible:ring-ring/50 gap-2 rounded-lg px-4 py-2 text-sm font-semibold shadow-none disabled:opacity-50"
                 >
                   <span>Apply</span>
-                  <kbd className="rounded-md border border-black/15 bg-black/10 px-2 py-0.5 font-mono text-[11px] text-neutral-900">
-                    {shortcuts.apply}
-                  </kbd>
+                  <KbdGroup>
+                    {isMac ? (
+                      <>
+                        <Kbd className={applyShortcutKbdClass}>⌘</Kbd>
+                        <Plus
+                          className="text-primary-foreground size-3 shrink-0"
+                          aria-hidden
+                        />
+                        <Kbd className={applyShortcutKbdClass}>↩</Kbd>
+                      </>
+                    ) : (
+                      <>
+                        <Kbd className={applyShortcutKbdClass}>Ctrl</Kbd>
+                        <Plus
+                          className="text-primary-foreground size-3 shrink-0"
+                          aria-hidden
+                        />
+                        <Kbd className={applyShortcutKbdClass}>Enter</Kbd>
+                      </>
+                    )}
+                  </KbdGroup>
                 </Button>
               </div>
             )}

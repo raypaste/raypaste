@@ -1,59 +1,39 @@
-import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
+import {
+  WebviewWindow,
+  getCurrentWebviewWindow,
+} from "@tauri-apps/api/webviewWindow";
 import { toast } from "#/hooks/useToast";
 import { OVERLAY } from "#/lib/overlay";
 
-const TOAST_WIDTH = 300;
-const TOAST_HEIGHT = 46;
-const MARGIN = 16;
-const GAP = 6;
-
-let activeToastCount = 0;
-
-function getToastPosition(index: number) {
-  const x = Math.round(window.screen.availWidth - TOAST_WIDTH - MARGIN);
-  const y = Math.round(
-    window.screen.availHeight - (TOAST_HEIGHT + GAP) * (index + 1) - MARGIN,
-  );
-  return { x, y };
-}
-
 export type NotificationVariant = "error" | "success" | "info";
 
+/**
+ * Shows an app toast (Sonner) in the main window. Hotkey flows run in the main
+ * webview; separate notification WebviewWindows bypassed the mounted Toaster,
+ * so errors often never appeared after switching to Sonner.
+ */
 export function showToastOverlay(
   message: string,
   variant: NotificationVariant,
   durationMs = 3000,
-): WebviewWindow | null {
-  const index = activeToastCount++;
-  const { x, y } = getToastPosition(index);
-  const params = new URLSearchParams({
-    overlay: OVERLAY.toast,
-    message,
-    variant,
-    duration: String(durationMs),
-  });
+): void {
+  const opts = { duration: durationMs };
+  switch (variant) {
+    case "error":
+      toast.error(message, opts);
+      break;
+    case "success":
+      toast.success(message, opts);
+      break;
+    case "info":
+      toast.info(message, opts);
+      break;
+  }
 
-  try {
-    const win = new WebviewWindow(`notification-${Date.now()}`, {
-      url: `/?${params}`,
-      width: TOAST_WIDTH,
-      height: TOAST_HEIGHT,
-      transparent: true,
-      decorations: false,
-      alwaysOnTop: true,
-      skipTaskbar: true,
-      focus: false,
-      x,
-      y,
-    });
-    win.once("tauri://destroyed", () => {
-      activeToastCount = Math.max(0, activeToastCount - 1);
-    });
-    return win;
-  } catch {
-    activeToastCount = Math.max(0, activeToastCount - 1);
-    toast[variant](message);
-    return null;
+  if (variant === "error") {
+    void getCurrentWebviewWindow()
+      .setFocus()
+      .catch(() => {});
   }
 }
 
