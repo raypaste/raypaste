@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { ExportedPromptFile, ImportMode } from "#/lib/promptsImportExport";
 
 /**
  * Invariants for website prompt ↔ prompt linkage (see `docs/WEBSITE_PROMPTS.md`):
@@ -292,6 +293,10 @@ interface PromptsState {
     appId: string,
     pageUrl: string | null | undefined,
   ) => PromptResolution | undefined;
+  importPrompts: (
+    payload: ExportedPromptFile,
+    mode: ImportMode,
+  ) => { importedPromptCount: number; importedSiteCount: number };
 }
 
 type PersistedPromptsState = Partial<PromptsState> & {
@@ -631,6 +636,62 @@ export const usePromptsStore = create<PromptsState>()(
           withResolution(builtinPrompt, "builtin") ??
           withResolution(firstPrompt, "builtin")
         );
+      },
+      importPrompts: (payload, mode) => {
+        const state = get();
+
+        if (mode === "replace") {
+          const newPrompts = recomputePromptWebsiteSiteIds(
+            payload.prompts.map((p) => ({ ...p, websitePromptSiteIds: [] })),
+            payload.websitePromptSites.map((s) => ({
+              ...s,
+              iconSrc: null,
+              iconStatus: "idle" as const,
+            })),
+          );
+          const newSites = payload.websitePromptSites.map((s) => ({
+            ...s,
+            iconSrc: null,
+            iconStatus: "idle" as const,
+          }));
+          set({
+            prompts: newPrompts,
+            websitePromptSites: newSites,
+            defaultPromptId: payload.defaultPromptId,
+          });
+          return {
+            importedPromptCount: payload.prompts.length,
+            importedSiteCount: payload.websitePromptSites.length,
+          };
+        }
+
+        // Merge mode
+        const existingPromptIds = new Set(state.prompts.map((p) => p.id));
+        const newPrompts = payload.prompts
+          .filter((p) => !existingPromptIds.has(p.id))
+          .map((p) => ({ ...p, websitePromptSiteIds: [] }));
+
+        const existingSiteIds = new Set(
+          state.websitePromptSites.map((s) => s.id),
+        );
+        const newSites = payload.websitePromptSites
+          .filter((s) => !existingSiteIds.has(s.id))
+          .map((s) => ({ ...s, iconSrc: null, iconStatus: "idle" as const }));
+
+        const mergedPrompts = recomputePromptWebsiteSiteIds(
+          [...state.prompts, ...newPrompts],
+          [...state.websitePromptSites, ...newSites],
+        );
+
+        set({
+          prompts: mergedPrompts,
+          websitePromptSites: [...state.websitePromptSites, ...newSites],
+        });
+
+        return {
+          importedPromptCount: newPrompts.length,
+          importedSiteCount: newSites.length,
+        };
       },
     }),
     {

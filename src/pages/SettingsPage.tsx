@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Eye, EyeOff, Monitor, Moon, Sun } from "lucide-react";
+import { ImportExportSection } from "./settings/ImportExportSection";
 import {
   filterComboboxItems,
   useComboboxSearchDirty,
@@ -330,6 +331,9 @@ export function SettingsPage() {
           </ComboboxContent>
         </Combobox>
       </section>
+
+      {/* Import & Export */}
+      <ImportExportSection />
     </div>
   );
 }

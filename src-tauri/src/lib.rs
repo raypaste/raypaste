@@ -67,6 +67,7 @@ pub fn run() {
             commands::focused_app::activate_app,
             commands::text::get_selected_text,
             commands::text::write_text_back,
+            commands::file_dialog::save_json_file,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
