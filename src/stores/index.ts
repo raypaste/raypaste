@@ -12,3 +12,4 @@ export type {
   HotkeyPromptResolution,
 } from "./promptsStore";
 export type { InstalledApp } from "./appsStore";
+export type { ExportedPromptFile, ImportMode } from "#/lib/promptsImportExport";

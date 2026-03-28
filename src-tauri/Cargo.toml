@@ -1,6 +1,6 @@
 [package]
 name = "Raypaste"
-version = "0.3.0"
+version = "0.3.1"
 description = "An app for fast, and customizable AI completions anywhere on your computer."
 authors = ["Winston Hsiao"]
 edition = "2021"
@@ -33,3 +33,4 @@ base64 = "0.22"
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "gzip", "brotli", "deflate", "charset"] }
 regex = "1"
 url = "2"
+rfd = "0.14"
