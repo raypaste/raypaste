@@ -9,5 +9,6 @@ export type {
   WebsitePromptSiteIconStatus,
   PromptResolution,
   PromptSource,
+  HotkeyPromptResolution,
 } from "./promptsStore";
 export type { InstalledApp } from "./appsStore";

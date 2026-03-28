@@ -4,6 +4,7 @@ import "#/App.css";
 import { NotificationPage } from "#/pages/NotificationPage";
 import { ReviewPage } from "#/pages/ReviewPage";
 import { ProgressPage } from "#/pages/ProgressPage";
+import { PromptPickPage } from "#/pages/PromptPickPage";
 import { OVERLAY, parseOverlayType } from "#/lib/overlay";
 import { useApplyDocumentTheme } from "#/hooks/useApplyDocumentTheme";
 import App from "#/App";
@@ -37,6 +38,13 @@ export function RenderWindow() {
       return (
         <OverlayThemeRoot>
           <ProgressPage />
+        </OverlayThemeRoot>
+      );
+
+    case OVERLAY.promptPick:
+      return (
+        <OverlayThemeRoot>
+          <PromptPickPage />
         </OverlayThemeRoot>
       );
 

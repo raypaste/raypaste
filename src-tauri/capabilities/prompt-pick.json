@@ -1,0 +1,12 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "prompt-pick",
+  "description": "Capability for the multi-prompt picker overlay",
+  "windows": ["prompt-pick-*"],
+  "permissions": [
+    "core:default",
+    "core:window:allow-close",
+    "core:window:allow-start-dragging",
+    "core:event:allow-emit"
+  ]
+}

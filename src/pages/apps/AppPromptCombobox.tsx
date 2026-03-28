@@ -19,6 +19,7 @@ interface AppPromptComboboxProps {
   assignedPromptId: string;
   onAssign: (promptId: string) => void;
   placeholder?: string;
+  disabled?: boolean;
   /** When false, the clear control is hidden (e.g. URL rules must keep a prompt). */
   showClear?: boolean;
   /** Merged onto `ComboboxInput` (e.g. `w-full max-w-none` for form layouts). */
@@ -30,6 +31,7 @@ export function AppPromptCombobox({
   assignedPromptId,
   onAssign,
   placeholder = "No prompt",
+  disabled = false,
   showClear = true,
   inputClassName,
 }: AppPromptComboboxProps) {
@@ -58,6 +60,7 @@ export function AppPromptCombobox({
     >
       <ComboboxInput
         placeholder={placeholder}
+        disabled={disabled}
         showTrigger
         showClear={showClear && !!assignedPromptId}
         className={cn("max-w-64 min-w-40", inputClassName)}

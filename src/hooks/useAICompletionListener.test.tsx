@@ -3,13 +3,14 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { useAICompletionListener } from "./useAICompletionListener";
 import { usePromptsStore, useSettingsStore } from "#/stores";
 import { getApiKey } from "#/services/llm";
-import { showToastOverlay } from "#/services/overlayWindows";
+import { showToastOverlay, PROMPT_PICK_STORAGE_KEY } from "#/services/overlayWindows";
 
 const listeners = vi.hoisted(
   () => new Map<string, (e: { payload: unknown }) => void>(),
 );
 const runReviewMode = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
 const runInstantMode = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+const mockShowPromptPickOverlay = vi.hoisted(() => vi.fn(() => null));
 
 vi.mock("@tauri-apps/api/event", () => ({
   listen: (event: string, handler: (e: { payload: unknown }) => void) => {
@@ -37,6 +38,8 @@ vi.mock("#/services/llm", () => ({
 
 vi.mock("#/services/overlayWindows", () => ({
   showToastOverlay: vi.fn(),
+  showPromptPickOverlay: mockShowPromptPickOverlay,
+  PROMPT_PICK_STORAGE_KEY: "raypaste-pending-prompt-pick",
 }));
 
 vi.mock("#/services/db", () => ({
@@ -191,5 +194,106 @@ describe("useAICompletionListener", () => {
       ),
     );
     expect(runInstantMode).not.toHaveBeenCalled();
+  });
+
+  it("opens prompt picker when multiple app-mapped prompts match", async () => {
+    const { addPrompt, assignAppToPrompt } = usePromptsStore.getState();
+    addPrompt({ id: "m1", name: "M1", text: "a" });
+    addPrompt({ id: "m2", name: "M2", text: "b" });
+    assignAppToPrompt("m1", "com.multi");
+    assignAppToPrompt("m2", "com.multi");
+
+    renderHook(() => useAICompletionListener());
+
+    await waitFor(() =>
+      expect(listeners.has("raypaste://hotkey-triggered")).toBe(true),
+    );
+
+    listeners.get("raypaste://hotkey-triggered")!({
+      payload: {
+        app: "com.multi",
+        selected_text: "hello",
+        target_pid: 42,
+        page_url: null,
+      },
+    });
+
+    await waitFor(() => expect(mockShowPromptPickOverlay).toHaveBeenCalled());
+    expect(runInstantMode).not.toHaveBeenCalled();
+    expect(runReviewMode).not.toHaveBeenCalled();
+  });
+
+  it("ignores hotkey while prompt picker session is pending", async () => {
+    localStorage.setItem(
+      PROMPT_PICK_STORAGE_KEY,
+      JSON.stringify({
+        sessionId: "open",
+        targetPid: 1,
+        app: "com.x",
+        selected_text: "x",
+        page_url: null,
+        candidates: [
+          {
+            id: "a",
+            name: "A",
+            source: "app",
+            matchedWebsitePattern: null,
+          },
+        ],
+      }),
+    );
+
+    renderHook(() => useAICompletionListener());
+
+    await waitFor(() =>
+      expect(listeners.has("raypaste://hotkey-triggered")).toBe(true),
+    );
+
+    listeners.get("raypaste://hotkey-triggered")!({
+      payload: {
+        app: "com.apple.Notes",
+        selected_text: "hello",
+        target_pid: 1,
+        page_url: null,
+      },
+    });
+
+    await new Promise((r) => setTimeout(r, 50));
+    expect(runInstantMode).not.toHaveBeenCalled();
+    expect(showToastOverlay).not.toHaveBeenCalled();
+  });
+
+  it("runs instant mode after prompt-picked with valid session", async () => {
+    const { addPrompt, assignAppToPrompt } = usePromptsStore.getState();
+    addPrompt({ id: "pick1", name: "Pick1", text: "system" });
+    assignAppToPrompt("pick1", "com.x");
+
+    renderHook(() => useAICompletionListener());
+
+    await waitFor(() =>
+      expect(listeners.has("raypaste://prompt-picked")).toBe(true),
+    );
+
+    listeners.get("raypaste://prompt-picked")!({
+      payload: {
+        sessionId: "sess-1",
+        promptId: "pick1",
+        targetPid: 7,
+        app: "com.x",
+        selected_text: "body",
+        page_url: null,
+        candidates: [
+          {
+            id: "pick1",
+            name: "Pick1",
+            source: "app",
+            matchedWebsitePattern: null,
+          },
+        ],
+      },
+    });
+
+    await waitFor(() => expect(runInstantMode).toHaveBeenCalled());
+    expect(localStorage.getItem(PROMPT_PICK_STORAGE_KEY)).toBeNull();
   });
 });

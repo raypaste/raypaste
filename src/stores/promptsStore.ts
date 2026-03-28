@@ -56,6 +56,15 @@ export interface PromptResolution {
   matchedWebsitePattern: string | null;
 }
 
+export type HotkeyPromptResolution =
+  | { kind: "single"; resolution: PromptResolution }
+  | { kind: "pick"; candidates: PromptResolution[] };
+
+export interface WebsitePromptCandidate {
+  promptId: string;
+  matchedWebsitePattern: string;
+}
+
 function normalizeDomainInput(input: string): string {
   const trimmed = input.trim().toLowerCase();
   if (!trimmed) {
@@ -180,15 +189,19 @@ function domainMatches(pageHost: string, siteDomain: string): boolean {
   return pageHost === siteDomain || pageHost.endsWith(`.${siteDomain}`);
 }
 
-function pickWebsitePromptMatch(
+/**
+ * All website prompt candidates for a URL at the winning site and specificity tier
+ * (same precedence as the former single-winner matcher).
+ */
+export function collectWebsitePromptCandidates(
   sites: WebsitePromptSite[],
   pageUrl: string,
-): { promptId: string; matchedWebsitePattern: string } | null {
+): WebsitePromptCandidate[] {
   let url: URL;
   try {
     url = new URL(pageUrl);
   } catch {
-    return null;
+    return [];
   }
 
   const pageHost = url.hostname.toLowerCase().replace(/\.+$/, "");
@@ -197,32 +210,59 @@ function pickWebsitePromptMatch(
     .sort((a, b) => b.domain.length - a.domain.length);
 
   for (const site of matchingSites) {
-    const pathRule = sortWebsitePromptRules(site.rules).find(
+    const sortedRules = sortWebsitePromptRules(site.rules);
+    const matchingPath = sortedRules.filter(
       (rule) =>
         rule.kind === "path-prefix" &&
         rule.promptId &&
         rule.value &&
         pageUrl.startsWith(rule.value),
     );
-    if (pathRule) {
-      return {
-        promptId: pathRule.promptId,
-        matchedWebsitePattern: pathRule.value,
-      };
+    if (matchingPath.length > 0) {
+      const maxLen = Math.max(...matchingPath.map((r) => r.value.length));
+      const atMax = matchingPath.filter((r) => r.value.length === maxLen);
+      const out: WebsitePromptCandidate[] = [];
+      const seen = new Set<string>();
+      for (const rule of atMax) {
+        if (!seen.has(rule.promptId)) {
+          seen.add(rule.promptId);
+          out.push({
+            promptId: rule.promptId,
+            matchedWebsitePattern: rule.value,
+          });
+        }
+      }
+      return out;
     }
 
-    const siteRule = site.rules.find(
+    const siteWide = sortedRules.filter(
       (rule) => rule.kind === "site" && rule.promptId,
     );
-    if (siteRule) {
-      return {
-        promptId: siteRule.promptId,
-        matchedWebsitePattern: site.domain,
-      };
+    if (siteWide.length > 0) {
+      const out: WebsitePromptCandidate[] = [];
+      const seen = new Set<string>();
+      for (const rule of siteWide) {
+        if (!seen.has(rule.promptId)) {
+          seen.add(rule.promptId);
+          out.push({
+            promptId: rule.promptId,
+            matchedWebsitePattern: site.domain,
+          });
+        }
+      }
+      return out;
     }
   }
 
-  return null;
+  return [];
+}
+
+function pickWebsitePromptMatch(
+  sites: WebsitePromptSite[],
+  pageUrl: string,
+): { promptId: string; matchedWebsitePattern: string } | null {
+  const c = collectWebsitePromptCandidates(sites, pageUrl);
+  return c[0] ?? null;
 }
 
 /**
@@ -259,7 +299,9 @@ interface PromptsState {
   updatePrompt: (id: string, updates: Partial<Omit<Prompt, "id">>) => void;
   deletePrompt: (id: string) => void;
   assignAppToPrompt: (promptId: string, appId: string) => void;
+  removeAppFromPrompt: (promptId: string, appId: string) => void;
   unassignApp: (appId: string) => void;
+  getPromptsForApp: (appId: string) => Prompt[];
   getPromptForApp: (appId: string) => Prompt | undefined;
   setDefaultPrompt: (id: string | null) => void;
   addWebsitePromptSite: () => string;
@@ -288,10 +330,10 @@ interface PromptsState {
     siteId: string,
     fetcher?: (domain: string) => Promise<string | null>,
   ) => Promise<void>;
-  resolvePromptForHotkey: (
+  resolveHotkeyPrompt: (
     appId: string,
     pageUrl: string | null | undefined,
-  ) => PromptResolution | undefined;
+  ) => HotkeyPromptResolution | undefined;
 }
 
 type PersistedPromptsState = Partial<PromptsState> & {
@@ -352,15 +394,22 @@ export const usePromptsStore = create<PromptsState>()(
         }),
       assignAppToPrompt: (promptId, appId) =>
         set((state) => ({
-          prompts: state.prompts.map((p) => {
-            if (p.id === promptId) {
-              return {
-                ...p,
-                appIds: [...p.appIds.filter((id) => id !== appId), appId],
-              };
-            }
-            return { ...p, appIds: p.appIds.filter((id) => id !== appId) };
-          }),
+          prompts: state.prompts.map((p) =>
+            p.id === promptId
+              ? {
+                  ...p,
+                  appIds: [...p.appIds.filter((id) => id !== appId), appId],
+                }
+              : p,
+          ),
+        })),
+      removeAppFromPrompt: (promptId, appId) =>
+        set((state) => ({
+          prompts: state.prompts.map((p) =>
+            p.id === promptId
+              ? { ...p, appIds: p.appIds.filter((id) => id !== appId) }
+              : p,
+          ),
         })),
       unassignApp: (appId) =>
         set((state) => ({
@@ -369,8 +418,9 @@ export const usePromptsStore = create<PromptsState>()(
             appIds: p.appIds.filter((id) => id !== appId),
           })),
         })),
-      getPromptForApp: (appId) =>
-        get().prompts.find((p) => p.appIds.includes(appId)),
+      getPromptsForApp: (appId) =>
+        get().prompts.filter((p) => p.appIds.includes(appId)),
+      getPromptForApp: (appId) => get().getPromptsForApp(appId)[0],
       setDefaultPrompt: (id) => set({ defaultPromptId: id }),
       addWebsitePromptSite: () => {
         const id = crypto.randomUUID();
@@ -582,7 +632,7 @@ export const usePromptsStore = create<PromptsState>()(
           }));
         }
       },
-      resolvePromptForHotkey: (appId, pageUrl) => {
+      resolveHotkeyPrompt: (appId, pageUrl) => {
         const state = get();
         const normalizedPageUrl = pageUrl?.trim() || null;
 
@@ -607,30 +657,55 @@ export const usePromptsStore = create<PromptsState>()(
             : undefined;
 
         if (normalizedPageUrl) {
-          const websiteMatch = pickWebsitePromptMatch(
+          const websiteRaw = collectWebsitePromptCandidates(
             state.websitePromptSites,
             normalizedPageUrl,
           );
-          if (websiteMatch) {
-            const found = state.prompts.find(
-              (p) => p.id === websiteMatch.promptId,
-            );
+          const websiteResolutions: PromptResolution[] = [];
+          for (const m of websiteRaw) {
+            const found = state.prompts.find((p) => p.id === m.promptId);
             if (found) {
-              return withResolution(
-                found,
-                "website",
-                websiteMatch.matchedWebsitePattern,
-              );
+              websiteResolutions.push({
+                prompt: found,
+                source: "website",
+                pageUrl: normalizedPageUrl,
+                matchedWebsitePattern: m.matchedWebsitePattern,
+              });
             }
+          }
+          if (websiteResolutions.length > 1) {
+            return { kind: "pick", candidates: websiteResolutions };
+          }
+          if (websiteResolutions.length === 1) {
+            return {
+              kind: "single",
+              resolution: websiteResolutions[0],
+            };
           }
         }
 
-        return (
-          withResolution(state.getPromptForApp(appId), "app") ??
+        const appPrompts = state.getPromptsForApp(appId);
+        const appResolutions: PromptResolution[] = appPrompts.map((prompt) => ({
+          prompt,
+          source: "app" as const,
+          pageUrl: normalizedPageUrl,
+          matchedWebsitePattern: null,
+        }));
+        if (appResolutions.length > 1) {
+          return { kind: "pick", candidates: appResolutions };
+        }
+        if (appResolutions.length === 1) {
+          return { kind: "single", resolution: appResolutions[0] };
+        }
+
+        const fallback =
           withResolution(defaultPrompt, "default") ??
           withResolution(builtinPrompt, "builtin") ??
-          withResolution(firstPrompt, "builtin")
-        );
+          withResolution(firstPrompt, "builtin");
+        if (!fallback) {
+          return undefined;
+        }
+        return { kind: "single", resolution: fallback };
       },
     }),
     {
