@@ -21,7 +21,7 @@ export function PromptPage({
     updatePrompt,
     deletePrompt,
     assignAppToPrompt,
-    unassignApp,
+    removeAppFromPrompt,
     defaultPromptId,
     setDefaultPrompt,
     websitePromptSites,
@@ -158,7 +158,7 @@ export function PromptPage({
             const added = newIds.filter((id) => !prompt.appIds.includes(id));
             const removed = prompt.appIds.filter((id) => !newIds.includes(id));
             added.forEach((id) => assignAppToPrompt(promptId, id));
-            removed.forEach((id) => unassignApp(id));
+            removed.forEach((id) => removeAppFromPrompt(promptId, id));
           }}
         />
 

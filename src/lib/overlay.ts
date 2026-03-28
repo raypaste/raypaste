@@ -2,6 +2,7 @@ export const OVERLAY = {
   review: "review",
   toast: "toast",
   progress: "progress",
+  promptPick: "prompt-pick",
 } as const;
 
 export type OverlayType = (typeof OVERLAY)[keyof typeof OVERLAY];

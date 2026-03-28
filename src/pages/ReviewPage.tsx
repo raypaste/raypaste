@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Plus } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import { emit, listen } from "@tauri-apps/api/event";
@@ -34,6 +34,28 @@ type Phase =
     }
   | { kind: "error"; message: string };
 
+/** WKWebView / macOS sometimes differs on `key` vs `code` and modifier flags. */
+function isApplyShortcut(e: KeyboardEvent): boolean {
+  if (e.repeat) {
+    return false;
+  }
+  const enter =
+    e.key === "Enter" ||
+    e.key === "NumpadEnter" ||
+    e.code === "Enter" ||
+    e.code === "NumpadEnter";
+  if (!enter) {
+    return false;
+  }
+  const meta =
+    e.metaKey ||
+    (typeof e.getModifierState === "function" && e.getModifierState("Meta"));
+  const ctrl =
+    e.ctrlKey ||
+    (typeof e.getModifierState === "function" && e.getModifierState("Control"));
+  return Boolean(meta || ctrl);
+}
+
 export function ReviewPage() {
   const initial = loadStorage();
   const win = getCurrentWebviewWindow();
@@ -68,11 +90,29 @@ export function ReviewPage() {
   });
   const [applied, setApplied] = useState(false);
 
+  const phaseRef = useRef(phase);
+  const textRef = useRef(text);
+  const appliedRef = useRef(false);
+
+  useEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
+  useEffect(() => {
+    textRef.current = text;
+  }, [text]);
+  useEffect(() => {
+    appliedRef.current = applied;
+  }, [applied]);
+
   useEffect(() => {
     if (!initial) {
       win.close();
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    void win.setFocus().catch(() => {});
+  }, [win]);
 
   // Subscribe to streaming events
   useEffect(() => {
@@ -95,6 +135,7 @@ export function ReviewPage() {
         durationMs: stored.durationMs,
         originalText: stored.originalText,
       });
+      void win.setFocus().catch(() => {});
     });
 
     const unlistenError = listen<{ message: string }>(
@@ -119,24 +160,28 @@ export function ReviewPage() {
   }, [win]);
 
   const handleApply = useCallback(async () => {
-    if (phase.kind !== "ready" || applied) {
+    const ph = phaseRef.current;
+    if (ph.kind !== "ready" || appliedRef.current) {
       return;
     }
+    appliedRef.current = true;
     setApplied(true);
+    const finalText = textRef.current;
     try {
-      await invoke("write_text_back", { text, targetPid: phase.targetPid });
+      await invoke("write_text_back", { text: finalText, targetPid: ph.targetPid });
       localStorage.removeItem(REVIEW_STORAGE_KEY);
       await emit("raypaste://review-outcome", {
-        completionId: phase.completionId,
-        finalText: text,
+        completionId: ph.completionId,
+        finalText,
         wasApplied: true,
-        targetPid: phase.targetPid,
+        targetPid: ph.targetPid,
       });
       await win.close();
     } catch {
+      appliedRef.current = false;
       setApplied(false);
     }
-  }, [phase, text, applied, win]);
+  }, [win]);
 
   const handleDismiss = useCallback(async () => {
     localStorage.removeItem(REVIEW_STORAGE_KEY);
@@ -159,22 +204,38 @@ export function ReviewPage() {
     await win.close();
   }, [initial?.targetPid, win]);
 
+  const handleDismissRef = useRef(handleDismiss);
+  const handleCancelRef = useRef(handleCancel);
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
+    handleDismissRef.current = handleDismiss;
+  }, [handleDismiss]);
+  useEffect(() => {
+    handleCancelRef.current = handleCancel;
+  }, [handleCancel]);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        if (phase.kind === "loading") {
-          handleCancel();
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        if (phaseRef.current.kind === "loading") {
+          void handleCancelRef.current();
         } else {
-          handleDismiss();
+          void handleDismissRef.current();
         }
+        return;
       }
-      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-        handleApply();
+      if (isApplyShortcut(e)) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        void handleApply();
       }
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [phase, handleApply, handleDismiss, handleCancel]);
+    document.addEventListener("keydown", onKeyDown, { capture: true });
+    return () => {
+      document.removeEventListener("keydown", onKeyDown, { capture: true });
+    };
+  }, [handleApply]);
 
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
   const isLoading = phase.kind === "loading";
@@ -264,6 +325,16 @@ export function ReviewPage() {
               onChange={(e) => setText(e.target.value)}
               readOnly={isLoading}
               autoFocus={!isLoading}
+              onKeyDown={(e) => {
+                if (isLoading || phase.kind !== "ready") {
+                  return;
+                }
+                if (isApplyShortcut(e.nativeEvent)) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  void handleApply();
+                }
+              }}
               className={cn(
                 "text-foreground flex-1 resize-none bg-transparent text-[15px] leading-[1.75]",
                 "placeholder:text-muted-foreground focus:outline-none",
