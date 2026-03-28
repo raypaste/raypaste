@@ -1,15 +1,22 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
+import { Badge } from "#/components/ui/badge";
+import { Button } from "#/components/ui/button";
 import { cn } from "#/lib/utils";
 import { useAppsStore, usePromptsStore } from "#/stores";
-import type { InstalledApp } from "#/stores";
+import type { InstalledApp, Prompt } from "#/stores";
 import { AppPromptCombobox } from "#/pages/apps/AppPromptCombobox";
 import { useAppIcons } from "#/hooks/useAppIcons";
 
+function formatPromptCount(count: number): string {
+  return `${count} prompt${count === 1 ? "" : "s"}`;
+}
+
 export function AppsPage() {
   const { apps, setApps } = useAppsStore();
-  const { prompts, assignAppToPrompt, unassignApp } = usePromptsStore();
+  const { prompts, assignAppToPrompt, removeAppFromPrompt, unassignApp } =
+    usePromptsStore();
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(apps.length === 0);
   const iconSrcByBundleId = useAppIcons(apps);
@@ -32,16 +39,8 @@ export function AppsPage() {
       app.bundleId.toLowerCase().includes(search.toLowerCase()),
   );
 
-  function getAssignedPromptId(bundleId: string): string {
-    return prompts.find((p) => p.appIds.includes(bundleId))?.id ?? "";
-  }
-
-  function handleAssign(bundleId: string, promptId: string) {
-    if (!promptId) {
-      unassignApp(bundleId);
-    } else {
-      assignAppToPrompt(promptId, bundleId);
-    }
+  function assignedPromptsForBundle(bundleId: string): Prompt[] {
+    return prompts.filter((p) => p.appIds.includes(bundleId));
   }
 
   if (loading) {
@@ -74,33 +73,126 @@ export function AppsPage() {
         {filtered.length === 0 ? (
           <p className="text-muted-foreground text-sm">No apps found.</p>
         ) : (
-          <div className="space-y-1">
-            {filtered.map((app) => (
-              <div
-                key={app.bundleId}
-                className="hover:bg-muted/40 flex items-center gap-3 rounded-lg px-3 py-2"
-              >
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center">
-                  {iconSrcByBundleId[app.bundleId] ? (
-                    <img
-                      src={iconSrcByBundleId[app.bundleId]}
-                      alt=""
-                      className="h-8 w-8 object-contain"
-                    />
-                  ) : (
-                    <div className="bg-muted/50 h-8 w-8 rounded-lg" />
+          <div className="space-y-2">
+            {filtered.map((app) => {
+              const assigned = assignedPromptsForBundle(app.bundleId);
+              const addablePrompts = prompts.filter(
+                (p) => !p.appIds.includes(app.bundleId),
+              );
+              return (
+                <div
+                  key={app.bundleId}
+                  className={cn(
+                    "border-border/70 bg-card/40 hover:border-border hover:bg-card/60 rounded-xl border px-3 py-2.5 transition-colors",
+                    assigned.length > 0 && "shadow-xs",
                   )}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/70 shadow-sm ring-1 ring-black/5 dark:bg-white/5 dark:ring-white/10">
+                      {iconSrcByBundleId[app.bundleId] ? (
+                        <img
+                          src={iconSrcByBundleId[app.bundleId]}
+                          alt=""
+                          className="h-8 w-8 object-contain"
+                        />
+                      ) : (
+                        <div className="bg-muted/50 h-8 w-8 rounded-lg" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-foreground truncate text-sm font-medium">
+                          {app.name}
+                        </p>
+                        <Badge
+                          variant={
+                            assigned.length > 0 ? "secondary" : "outline"
+                          }
+                          className="shrink-0"
+                        >
+                          {formatPromptCount(assigned.length)}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-muted/20 mt-3 rounded-xl border border-dashed border-white/10 p-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-foreground/90 text-xs font-medium tracking-wide uppercase">
+                        Mapped prompts
+                      </p>
+                      {assigned.length > 0 ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="xs"
+                          className="text-muted-foreground hover:text-foreground h-auto px-0"
+                          onClick={() => unassignApp(app.bundleId)}
+                        >
+                          Clear all
+                        </Button>
+                      ) : null}
+                    </div>
+
+                    {assigned.length > 0 ? (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {assigned.map((p) => (
+                          <span
+                            key={p.id}
+                            className="border-border bg-background/80 text-foreground inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs shadow-sm"
+                          >
+                            <span className="max-w-52 truncate">{p.name}</span>
+                            <button
+                              type="button"
+                              className="text-muted-foreground hover:text-foreground hover:bg-muted shrink-0 rounded-full p-0.5 transition-colors"
+                              aria-label={`Remove ${p.name}`}
+                              onClick={() =>
+                                removeAppFromPrompt(p.id, app.bundleId)
+                              }
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground mt-3 text-sm">
+                        No prompts assigned yet. Add one below for quick access
+                        when this app is active.
+                      </p>
+                    )}
+
+                    <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="w-full sm:max-w-80">
+                        <AppPromptCombobox
+                          key={`${app.bundleId}-${assigned.map((p) => p.id).join(",")}`}
+                          prompts={addablePrompts}
+                          assignedPromptId=""
+                          onAssign={(promptId) => {
+                            if (promptId) {
+                              assignAppToPrompt(promptId, app.bundleId);
+                            }
+                          }}
+                          placeholder={
+                            addablePrompts.length > 0
+                              ? "Add prompt..."
+                              : "All prompts already assigned"
+                          }
+                          disabled={addablePrompts.length === 0}
+                          showClear={false}
+                          inputClassName="w-full min-w-0 max-w-none"
+                        />
+                      </div>
+                      <p className="text-muted-foreground text-xs">
+                        {addablePrompts.length > 0
+                          ? "Apps can map to multiple prompts."
+                          : "No additional prompts available."}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-foreground truncate text-sm">{app.name}</p>
-                </div>
-                <AppPromptCombobox
-                  prompts={prompts}
-                  assignedPromptId={getAssignedPromptId(app.bundleId)}
-                  onAssign={(promptId) => handleAssign(app.bundleId, promptId)}
-                />
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

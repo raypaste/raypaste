@@ -27,13 +27,13 @@ Run a single test file: `pnpm test src/path/to/file.test.tsx`
 Main Raypaste hotkey, (default: **Cmd+Ctrl+R**) triggers:
 
 1. **Rust** (`lib.rs`): intercepts via `tauri_plugin_global_shortcut`, captures focused app + selected text on main thread, resolves browser URL off-thread via AppleScript (`commands/browser_url.rs`). Emits `raypaste://hotkey-triggered` with `{ app, selected_text, target_pid, page_url? }`.
-2. **Frontend** (`src/hooks/useAICompletionListener.ts`): resolves prompt, creates `AbortController`, branches to review or instant mode.
+2. **Frontend** (`src/hooks/useAICompletionListener.ts`): `resolveHotkeyPrompt` in `promptsStore`; if multiple website or app candidates apply, opens the prompt-picker overlay; otherwise creates `AbortController` and branches to review or instant mode.
 3. **Persistence**: saves to SQLite, emits `raypaste://completion-saved` to refresh `HistoryPage`.
 
-**Prompt resolution order** (in `resolvePromptForHotkey`):
+**Prompt resolution order** (in `resolveHotkeyPrompt`):
 
-1. Website match (if `page_url` present) — longest domain wins, then longest path-prefix
-2. Per-app assignment
+1. Website candidates (if `page_url` present) — longest domain wins for which site applies; within that site, longest matching path-prefix tier, else all site-wide rules; **multiple prompts at the winning specificity tier** → picker
+2. Per-app prompts (`getPromptsForApp`) — more than one → picker; one → use it
 3. Default prompt (`defaultPromptId`)
 4. Built-in `formal` prompt
 5. First prompt in list
@@ -44,14 +44,15 @@ If website prompts exist but no `page_url` is available (Firefox unsupported; Ap
 
 `src/main.tsx` → `<RenderWindow />` routes on `?overlay` query param. All overlays share the same React bundle — each is a separate `WebviewWindow`:
 
-| `?overlay=` | Component              | Purpose                               |
-| ----------- | ---------------------- | ------------------------------------- |
-| _(none)_    | `<App />`              | Main window                           |
-| `review`    | `<ReviewPage />`       | Streaming text editor (accept/reject) |
-| `progress`  | `<ProgressPage />`     | Instant mode spinner                  |
-| `toast`     | `<NotificationPage />` | Error/success toast                   |
+| `?overlay=`   | Component              | Purpose                                                            |
+| ------------- | ---------------------- | ------------------------------------------------------------------ |
+| _(none)_      | `<App />`              | Main window                                                        |
+| `review`      | `<ReviewPage />`       | Streaming text editor (accept/reject)                              |
+| `progress`    | `<ProgressPage />`     | Instant mode spinner                                               |
+| `toast`       | `<NotificationPage />` | Hotkey / LLM feedback (`notification-*`, bottom-right; not Sonner) |
+| `prompt-pick` | `<PromptPickPage />`   | Multi-prompt chooser after hotkey                                  |
 
-**Cross-window IPC:** Overlays share localStorage (same origin). For review mode, initial state + streaming chunks are written to `localStorage[REVIEW_STORAGE_KEY]` — this avoids focus-flashing race conditions with Tauri event delivery timing. Instant mode skips this; main window closes `progressWin.close()` directly.
+**Cross-window IPC:** Overlays share localStorage (same origin). For review mode, initial state + streaming chunks are written to `localStorage[REVIEW_STORAGE_KEY]` — this avoids focus-flashing race conditions with Tauri event delivery timing. The prompt picker uses `localStorage[PROMPT_PICK_STORAGE_KEY]`; the main window listens for `raypaste://prompt-picked` / `raypaste://prompt-pick-cancel`. Hotkey-related messages use `showToastOverlay()` in `overlayWindows.ts`, which opens a dedicated `notification-*` window (bottom-right, `focus: false`) so they are visible over other apps; use Sonner `toast` from `#/hooks/useToast` only for in-app UI. Instant mode skips this; main window closes `progressWin.close()` directly.
 
 Capability files in `src-tauri/capabilities/` control what each window type can do (emit events, drag, close).
 
@@ -65,7 +66,7 @@ Zustand + `persist` (localStorage), all re-exported from `src/stores/index.ts`:
 
 **Critical invariants in `promptsStore`:**
 
-- **App assignment is exclusive**: `assignAppToPrompt` removes the app from all other prompts simultaneously (enforced at state level, not just UI).
+- **App assignment is many-to-many**: `assignAppToPrompt` only adds the bundle id to that prompt’s `appIds` (deduped). Use `removeAppFromPrompt(promptId, appId)` to drop one link from the prompt editor; use `unassignApp(appId)` to remove that app from **all** prompts (e.g. Apps page “Clear all”).
 - **`websitePromptSiteIds[]` is denormalized** on each `Prompt` (derived from `websitePromptSites` rules). Call `recomputePromptWebsiteSiteIds()` after every mutation that touches sites or rules — including in `persist` merge. Failing to do so breaks the sidebar "Unassigned" count and related UI.
 
 ### LLM service layer

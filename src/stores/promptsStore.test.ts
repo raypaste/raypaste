@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import {
   usePromptsStore,
   pickWebsitePromptMatch,
+  collectWebsitePromptCandidates,
   recomputePromptWebsiteSiteIds,
   normalizeDomainInput,
   type Prompt,
@@ -129,6 +130,74 @@ describe("pickWebsitePromptMatch", () => {
   });
 });
 
+describe("collectWebsitePromptCandidates", () => {
+  it("returns multiple prompts for several site-wide rules on same domain", () => {
+    const sites: WebsitePromptSite[] = [
+      {
+        id: "s",
+        domain: "example.com",
+        iconSrc: null,
+        iconStatus: "idle",
+        rules: [
+          {
+            id: "r1",
+            kind: "site",
+            value: "",
+            promptId: "p-a",
+            label: "",
+          },
+          {
+            id: "r2",
+            kind: "site",
+            value: "",
+            promptId: "p-b",
+            label: "",
+          },
+        ],
+      },
+    ];
+    const c = collectWebsitePromptCandidates(
+      sites,
+      "https://example.com/page",
+    );
+    expect(c.map((x) => x.promptId)).toEqual(["p-a", "p-b"]);
+  });
+
+  it("returns multiple path-prefix rules tied at max specificity", () => {
+    const prefix = "https://example.com/a/b";
+    const sites: WebsitePromptSite[] = [
+      {
+        id: "s",
+        domain: "example.com",
+        iconSrc: null,
+        iconStatus: "idle",
+        rules: [
+          {
+            id: "x",
+            kind: "path-prefix",
+            value: prefix,
+            promptId: "p1",
+            label: "",
+          },
+          {
+            id: "y",
+            kind: "path-prefix",
+            value: prefix,
+            promptId: "p2",
+            label: "",
+          },
+        ],
+      },
+    ];
+    const c = collectWebsitePromptCandidates(
+      sites,
+      "https://example.com/a/b/c",
+    );
+    expect(c).toHaveLength(2);
+    expect(new Set(c.map((x) => x.promptId))).toEqual(new Set(["p1", "p2"]));
+  });
+});
+
 describe("normalizeDomainInput", () => {
   it("normalizes bare host and strips trailing dots", () => {
     expect(normalizeDomainInput("Example.COM.")).toBe("example.com");
@@ -226,23 +295,40 @@ describe("usePromptsStore actions", () => {
     ).toEqual(["ws"]);
   });
 
-  it("assignAppToPrompt assigns app exclusively to one prompt", () => {
-    const { addPrompt, assignAppToPrompt } = usePromptsStore.getState();
+  it("assignAppToPrompt allows same app on multiple prompts; removeAppFromPrompt is scoped", () => {
+    const { addPrompt, assignAppToPrompt, removeAppFromPrompt, unassignApp } =
+      usePromptsStore.getState();
     addPrompt({ id: "p1", name: "A", text: "a" });
     addPrompt({ id: "p2", name: "B", text: "b" });
     assignAppToPrompt("p1", "com.app");
-    expect(
-      usePromptsStore.getState().prompts.find((p) => p.id === "p1")?.appIds,
-    ).toEqual(["com.app"]);
     assignAppToPrompt("p2", "com.app");
-    const state = usePromptsStore.getState();
+    let state = usePromptsStore.getState();
+    expect(state.prompts.find((p) => p.id === "p1")?.appIds).toEqual([
+      "com.app",
+    ]);
+    expect(state.prompts.find((p) => p.id === "p2")?.appIds).toEqual([
+      "com.app",
+    ]);
+    expect(state.getPromptsForApp("com.app").map((p) => p.id)).toEqual([
+      "p1",
+      "p2",
+    ]);
+
+    removeAppFromPrompt("p1", "com.app");
+    state = usePromptsStore.getState();
     expect(state.prompts.find((p) => p.id === "p1")?.appIds).toEqual([]);
     expect(state.prompts.find((p) => p.id === "p2")?.appIds).toEqual([
       "com.app",
     ]);
+
+    assignAppToPrompt("p1", "com.app");
+    unassignApp("com.app");
+    state = usePromptsStore.getState();
+    expect(state.prompts.find((p) => p.id === "p1")?.appIds).toEqual([]);
+    expect(state.prompts.find((p) => p.id === "p2")?.appIds).toEqual([]);
   });
 
-  it("resolvePromptForHotkey uses website match when URL and prompt exist", () => {
+  it("resolveHotkeyPrompt uses website match when URL and prompt exist", () => {
     const { addPrompt } = usePromptsStore.getState();
     addPrompt({ id: "web-p", name: "Web", text: "w" });
     usePromptsStore.setState({
@@ -270,12 +356,113 @@ describe("usePromptsStore actions", () => {
 
     const r = usePromptsStore
       .getState()
-      .resolvePromptForHotkey("com.other", "https://news.example.com/page");
-    expect(r?.source).toBe("website");
-    expect(r?.prompt.id).toBe("web-p");
+      .resolveHotkeyPrompt("com.other", "https://news.example.com/page");
+    expect(r?.kind).toBe("single");
+    if (r?.kind === "single") {
+      expect(r.resolution.source).toBe("website");
+      expect(r.resolution.prompt.id).toBe("web-p");
+    }
   });
 
-  it("resolvePromptForHotkey falls back when website match references missing prompt", () => {
+  it("resolveHotkeyPrompt website beats app when both apply", () => {
+    const { addPrompt, assignAppToPrompt } = usePromptsStore.getState();
+    addPrompt({ id: "web-p", name: "Web", text: "w" });
+    addPrompt({ id: "app-p", name: "App", text: "a" });
+    assignAppToPrompt("app-p", "com.chrome");
+    usePromptsStore.setState({
+      websitePromptSites: [
+        {
+          id: "s",
+          domain: "x.com",
+          iconSrc: null,
+          iconStatus: "idle",
+          rules: [
+            {
+              id: "r",
+              kind: "site",
+              value: "",
+              promptId: "web-p",
+              label: "",
+            },
+          ],
+        },
+      ],
+    });
+    usePromptsStore.setState((st) => ({
+      prompts: recomputePromptWebsiteSiteIds(st.prompts, st.websitePromptSites),
+    }));
+
+    const r = usePromptsStore
+      .getState()
+      .resolveHotkeyPrompt("com.chrome", "https://x.com/y");
+    expect(r?.kind).toBe("single");
+    if (r?.kind === "single") {
+      expect(r.resolution.prompt.id).toBe("web-p");
+      expect(r.resolution.source).toBe("website");
+    }
+  });
+
+  it("resolveHotkeyPrompt returns pick when multiple website prompts match", () => {
+    const { addPrompt } = usePromptsStore.getState();
+    addPrompt({ id: "w1", name: "W1", text: "a" });
+    addPrompt({ id: "w2", name: "W2", text: "b" });
+    usePromptsStore.setState({
+      websitePromptSites: [
+        {
+          id: "s",
+          domain: "example.com",
+          iconSrc: null,
+          iconStatus: "idle",
+          rules: [
+            {
+              id: "r1",
+              kind: "site",
+              value: "",
+              promptId: "w1",
+              label: "",
+            },
+            {
+              id: "r2",
+              kind: "site",
+              value: "",
+              promptId: "w2",
+              label: "",
+            },
+          ],
+        },
+      ],
+    });
+    usePromptsStore.setState((st) => ({
+      prompts: recomputePromptWebsiteSiteIds(st.prompts, st.websitePromptSites),
+    }));
+
+    const r = usePromptsStore
+      .getState()
+      .resolveHotkeyPrompt("com.any", "https://example.com/");
+    expect(r?.kind).toBe("pick");
+    if (r?.kind === "pick") {
+      expect(r.candidates).toHaveLength(2);
+      expect(new Set(r.candidates.map((c) => c.prompt.id))).toEqual(
+        new Set(["w1", "w2"]),
+      );
+    }
+  });
+
+  it("resolveHotkeyPrompt returns pick when multiple app prompts match", () => {
+    const { addPrompt, assignAppToPrompt } = usePromptsStore.getState();
+    addPrompt({ id: "a1", name: "A1", text: "a" });
+    addPrompt({ id: "a2", name: "A2", text: "b" });
+    assignAppToPrompt("a1", "com.focused");
+    assignAppToPrompt("a2", "com.focused");
+
+    const r = usePromptsStore.getState().resolveHotkeyPrompt("com.focused", null);
+    expect(r?.kind).toBe("pick");
+    if (r?.kind === "pick") {
+      expect(r.candidates.map((c) => c.prompt.id)).toEqual(["a1", "a2"]);
+    }
+  });
+
+  it("resolveHotkeyPrompt falls back when website match references missing prompt", () => {
     usePromptsStore.setState({
       websitePromptSites: [
         {
@@ -298,34 +485,44 @@ describe("usePromptsStore actions", () => {
 
     const r = usePromptsStore
       .getState()
-      .resolvePromptForHotkey("com.any", "https://example.com/");
-    expect(r?.prompt.id).toBe("formal");
-    expect(r?.source).toBe("builtin");
+      .resolveHotkeyPrompt("com.any", "https://example.com/");
+    expect(r?.kind).toBe("single");
+    if (r?.kind === "single") {
+      expect(r.resolution.prompt.id).toBe("formal");
+      expect(r.resolution.source).toBe("builtin");
+    }
   });
 
-  it("resolvePromptForHotkey uses app then default then formal", () => {
+  it("resolveHotkeyPrompt uses app then default then formal", () => {
     const { addPrompt, assignAppToPrompt, setDefaultPrompt } =
       usePromptsStore.getState();
     addPrompt({ id: "app-p", name: "App", text: "a" });
     addPrompt({ id: "def-p", name: "Def", text: "d" });
     assignAppToPrompt("app-p", "com.focused");
-    const noApp = usePromptsStore
-      .getState()
-      .resolvePromptForHotkey("com.other", null);
-    expect(noApp?.source).toBe("builtin");
+    const noApp = usePromptsStore.getState().resolveHotkeyPrompt("com.other", null);
+    expect(noApp?.kind).toBe("single");
+    if (noApp?.kind === "single") {
+      expect(noApp.resolution.source).toBe("builtin");
+    }
 
     setDefaultPrompt("def-p");
     const withDefault = usePromptsStore
       .getState()
-      .resolvePromptForHotkey("com.other", null);
-    expect(withDefault?.prompt.id).toBe("def-p");
-    expect(withDefault?.source).toBe("default");
+      .resolveHotkeyPrompt("com.other", null);
+    expect(withDefault?.kind).toBe("single");
+    if (withDefault?.kind === "single") {
+      expect(withDefault.resolution.prompt.id).toBe("def-p");
+      expect(withDefault.resolution.source).toBe("default");
+    }
 
     const withApp = usePromptsStore
       .getState()
-      .resolvePromptForHotkey("com.focused", null);
-    expect(withApp?.prompt.id).toBe("app-p");
-    expect(withApp?.source).toBe("app");
+      .resolveHotkeyPrompt("com.focused", null);
+    expect(withApp?.kind).toBe("single");
+    if (withApp?.kind === "single") {
+      expect(withApp.resolution.prompt.id).toBe("app-p");
+      expect(withApp.resolution.source).toBe("app");
+    }
   });
 });
 
