@@ -87,7 +87,7 @@ export function AppsPage() {
                     assigned.length > 0 && "shadow-xs",
                   )}
                 >
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/70 shadow-sm ring-1 ring-black/5 dark:bg-white/5 dark:ring-white/10">
                       {iconSrcByBundleId[app.bundleId] ? (
                         <img
@@ -113,9 +113,6 @@ export function AppsPage() {
                           {formatPromptCount(assigned.length)}
                         </Badge>
                       </div>
-                      <p className="text-muted-foreground mt-1 truncate text-xs">
-                        {app.bundleId}
-                      </p>
                     </div>
                   </div>
 
