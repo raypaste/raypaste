@@ -1,13 +1,19 @@
 import { useState } from "react";
-import { Eye, EyeOff, Monitor, Moon, Sun } from "lucide-react";
+import { ChevronRight, Eye, EyeOff, Monitor, Moon, Sun } from "lucide-react";
 import { ImportExportSection } from "./settings/ImportExportSection";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "#/components/ui/collapsible";
 import {
   filterComboboxItems,
   useComboboxSearchDirty,
 } from "#/hooks/useComboboxSearchDirty";
 import { LLM_PROVIDER } from "#/services/llm/types";
 import { cn } from "#/lib/utils";
-import { useSettingsStore, usePromptsStore } from "#/stores";
+import { useAppIcons } from "#/hooks/useAppIcons";
+import { useAppsStore, useSettingsStore, usePromptsStore } from "#/stores";
 import type { ThemeMode } from "#/stores/settingsStore";
 import {
   Combobox,
@@ -46,12 +52,18 @@ export function SettingsPage() {
   ];
 
   const { prompts, defaultPromptId, setDefaultPrompt } = usePromptsStore();
+  const { apps, hiddenAppBundleIds, unhideApp } = useAppsStore();
 
   const [showKey, setShowKey] = useState(false);
   const [promptQuery, setPromptQuery] = useState("");
   const [modelQuery, setModelQuery] = useState("");
+  const [hiddenAppsOpen, setHiddenAppsOpen] = useState(false);
   const promptSearch = useComboboxSearchDirty();
   const modelSearch = useComboboxSearchDirty();
+  const hiddenApps = apps.filter((app) =>
+    hiddenAppBundleIds.includes(app.bundleId),
+  );
+  const hiddenAppIcons = useAppIcons(hiddenApps);
 
   const filteredPrompts = filterComboboxItems(
     prompts,
@@ -341,6 +353,75 @@ export function SettingsPage() {
 
       {/* Import & Export */}
       <ImportExportSection />
+
+      {/* Hidden Apps */}
+      <section className="space-y-3">
+        <Collapsible open={hiddenAppsOpen} onOpenChange={setHiddenAppsOpen}>
+          <div className="border-border/70 bg-card/30 rounded-xl border">
+            <CollapsibleTrigger className="flex w-full items-center gap-3 px-4 py-3 text-left">
+              <ChevronRight
+                className={cn(
+                  "text-muted-foreground h-4 w-4 shrink-0 transition-transform",
+                  hiddenAppsOpen && "rotate-90",
+                )}
+              />
+              <div className="min-w-0 flex-1">
+                <h2 className="text-foreground text-sm font-semibold">
+                  Hidden Apps
+                </h2>
+                <p className="text-muted-foreground mt-0.5 text-xs">
+                  {hiddenApps.length > 0
+                    ? `${hiddenApps.length} app${hiddenApps.length === 1 ? "" : "s"} hidden from the Apps page`
+                    : "No hidden apps"}
+                </p>
+              </div>
+            </CollapsibleTrigger>
+
+            <CollapsibleContent>
+              <div className="border-border/60 border-t px-4 py-3">
+                {hiddenApps.length === 0 ? (
+                  <p className="text-muted-foreground text-sm">
+                    Hidden apps will appear here.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {hiddenApps.map((app) => (
+                      <div
+                        key={app.bundleId}
+                        className="bg-muted/20 flex items-center gap-3 rounded-lg border px-3 py-2"
+                      >
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/70 shadow-sm ring-1 ring-black/5 dark:bg-white/5 dark:ring-white/10">
+                          {hiddenAppIcons[app.bundleId] ? (
+                            <img
+                              src={hiddenAppIcons[app.bundleId]}
+                              alt=""
+                              className="h-7 w-7 object-contain"
+                            />
+                          ) : (
+                            <div className="bg-muted/50 h-7 w-7 rounded-md" />
+                          )}
+                        </div>
+                        <p className="text-foreground min-w-0 flex-1 truncate text-sm font-medium">
+                          {app.name}
+                        </p>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="ml-auto"
+                          onClick={() => unhideApp(app.bundleId)}
+                        >
+                          Unhide
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </CollapsibleContent>
+          </div>
+        </Collapsible>
+      </section>
     </div>
   );
 }
