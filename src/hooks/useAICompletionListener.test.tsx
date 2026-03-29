@@ -3,7 +3,10 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { useAICompletionListener } from "./useAICompletionListener";
 import { usePromptsStore, useSettingsStore } from "#/stores";
 import { getApiKey } from "#/services/llm";
-import { showToastOverlay, PROMPT_PICK_STORAGE_KEY } from "#/services/overlayWindows";
+import {
+  showToastOverlay,
+  PROMPT_PICK_STORAGE_KEY,
+} from "#/services/overlayWindows";
 
 const listeners = vi.hoisted(
   () => new Map<string, (e: { payload: unknown }) => void>(),

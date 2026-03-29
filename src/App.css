@@ -24,7 +24,7 @@ body,
 }
 
 :root {
-  --background: #fafafa;
+  --background: #f8f8f8;
   --foreground: #0a0a0a;
   --card: #ffffff;
   --card-foreground: #0a0a0a;
@@ -84,7 +84,7 @@ body,
   --chart-3: #5fb884;
   --chart-4: #a8e0c0;
   --chart-5: #c4ebce;
-  --sidebar: #0a0a0a;
+  --sidebar: #121212;
   --sidebar-foreground: #f5f5f5;
   --sidebar-primary: #97d8b2;
   --sidebar-primary-foreground: #0a0a0a;
