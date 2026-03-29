@@ -24,7 +24,7 @@ export function Sidebar({
   return (
     <aside className="border-border bg-sidebar flex h-full min-h-0 w-[260px] shrink-0 flex-col border-r">
       {/* Header */}
-      <div className="shrink-0 px-3 pt-8 pb-3 select-none" />
+      <div className="shrink-0 px-3 pt-7 pb-3 select-none" />
 
       {/* Nav — fixed below header; does not scroll with prompts */}
       <div className="shrink-0 px-2">
@@ -32,7 +32,7 @@ export function Sidebar({
       </div>
 
       {/* Prompts — fills remaining height; internal scroll for lists */}
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pt-2 pb-4">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pt-3 pb-2">
         <PromptsSection
           activePage={activePage}
           selectedPromptId={selectedPromptId}
