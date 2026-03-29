@@ -22,13 +22,17 @@ export function Sidebar({
   onNavigate,
 }: SidebarProps) {
   return (
-    <aside className="border-border bg-sidebar flex w-[260px] shrink-0 flex-col border-r">
+    <aside className="border-border bg-sidebar flex h-full min-h-0 w-[260px] shrink-0 flex-col border-r">
       {/* Header */}
-      <div className="px-3 pt-8 pb-3 select-none"></div>
+      <div className="shrink-0 px-3 pt-8 pb-3 select-none" />
 
-      {/* Nav */}
-      <div className="flex-1 space-y-4 overflow-y-auto px-2 pb-4">
+      {/* Nav — fixed below header; does not scroll with prompts */}
+      <div className="shrink-0 px-2">
         <SidebarNav activePage={activePage} onNavigate={onNavigate} />
+      </div>
+
+      {/* Prompts — fills remaining height; internal scroll for lists */}
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-2 pt-2 pb-4">
         <PromptsSection
           activePage={activePage}
           selectedPromptId={selectedPromptId}
@@ -38,7 +42,7 @@ export function Sidebar({
       </div>
 
       {/* Settings */}
-      <div className="border-border border-t px-2 py-2">
+      <div className="border-border shrink-0 border-t px-2 py-2">
         <Button
           type="button"
           variant="ghost"
