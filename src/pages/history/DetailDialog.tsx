@@ -301,7 +301,7 @@ function DetailDialogBody({
   onNavigateToWebsiteSite,
 }: DetailDialogBodyProps) {
   const hasFinal =
-    row.isReviewMode &&
+    !!row.isReviewMode &&
     row.finalText !== null &&
     row.finalText !== row.outputText;
 
