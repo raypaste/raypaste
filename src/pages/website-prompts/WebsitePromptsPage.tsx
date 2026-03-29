@@ -20,6 +20,7 @@ export function WebsitePromptsPage(props: WebsitePromptsPageProps) {
     selectedSite,
     removingSiteId,
     setRemovingSiteId,
+    onCreatePrompt,
     pendingRemoveSite,
     getDomainDraft,
     setDomainDrafts,
@@ -80,6 +81,7 @@ export function WebsitePromptsPage(props: WebsitePromptsPageProps) {
                 removeWebsitePromptSiteRule={removeWebsitePromptSiteRule}
                 onRequestRemoveSite={() => setRemovingSiteId(selectedSite.id)}
                 onEditPrompt={onEditPrompt}
+                onCreatePrompt={onCreatePrompt}
               />
             )}
           </div>

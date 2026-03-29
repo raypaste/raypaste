@@ -5,6 +5,7 @@ import { TitleBar } from "#/components/TitleBar";
 import { Toaster } from "#/components/ui/sonner";
 import type { Page } from "#/components/Sidebar/SidebarNav";
 import { NewPromptPage } from "#/pages/prompts/NewPromptPage";
+import type { NewPromptPagePrefill } from "#/pages/prompts/newPromptPageTypes";
 import { PromptPage } from "#/pages/prompts/PromptPage";
 import { AppsPage } from "#/pages/apps/AppsPage";
 import { HistoryPage } from "#/pages/history/HistoryPage";
@@ -19,6 +20,8 @@ export function Layout() {
   const [selectedPromptId, setSelectedPromptId] = useState<string | null>(null);
   const [selectedWebsitePromptSiteId, setSelectedWebsitePromptSiteId] =
     useState<string | null>(null);
+  const [newPromptPrefill, setNewPromptPrefill] =
+    useState<NewPromptPagePrefill | null>(null);
   const { prompts } = usePromptsStore();
   const { apps, setApps } = useAppsStore();
 
@@ -38,6 +41,7 @@ export function Layout() {
     page: Page,
     promptId?: string,
     websitePromptSiteId?: string,
+    prefill?: NewPromptPagePrefill | null,
   ) {
     setActivePage(page);
     if (page === "prompt") {
@@ -45,20 +49,30 @@ export function Layout() {
         setSelectedPromptId(promptId);
       }
       setSelectedWebsitePromptSiteId(null);
+      setNewPromptPrefill(null);
     } else if (page === "website-prompts") {
       setSelectedPromptId(null);
       if (websitePromptSiteId !== undefined) {
         setSelectedWebsitePromptSiteId(websitePromptSiteId);
       }
+      setNewPromptPrefill(null);
+    } else if (page === "new-prompt") {
+      setSelectedPromptId(null);
+      setSelectedWebsitePromptSiteId(null);
+      setNewPromptPrefill(prefill ?? null);
     } else {
       setSelectedPromptId(null);
       setSelectedWebsitePromptSiteId(null);
+      setNewPromptPrefill(null);
     }
   }
 
   const selectedPromptName = selectedPromptId
     ? prompts.find((p) => p.id === selectedPromptId)?.name
     : undefined;
+  const newPromptPageKey = newPromptPrefill
+    ? JSON.stringify(newPromptPrefill)
+    : "empty";
 
   return (
     <>
@@ -79,7 +93,11 @@ export function Layout() {
 
           <div className="flex-1 overflow-auto">
             {activePage === "new-prompt" && (
-              <NewPromptPage onCreated={(id) => handleNavigate("prompt", id)} />
+              <NewPromptPage
+                key={newPromptPageKey}
+                prefill={newPromptPrefill}
+                onCreated={(id) => handleNavigate("prompt", id)}
+              />
             )}
             {activePage === "prompt" && selectedPromptId && (
               <PromptPage
@@ -101,6 +119,9 @@ export function Layout() {
                 selectedSiteId={selectedWebsitePromptSiteId}
                 onSelectSite={setSelectedWebsitePromptSiteId}
                 onEditPrompt={(id) => handleNavigate("prompt", id)}
+                onCreatePrompt={(prefill) =>
+                  handleNavigate("new-prompt", undefined, undefined, prefill)
+                }
               />
             )}
             {activePage === "history" && (
