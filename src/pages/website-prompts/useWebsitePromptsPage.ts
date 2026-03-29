@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import type { NewPromptPagePrefill } from "#/pages/prompts/newPromptPageTypes";
 import {
   normalizeDomainInput,
   normalizePathPrefixInput,
@@ -10,12 +11,14 @@ export interface WebsitePromptsPageProps {
   selectedSiteId: string | null;
   onSelectSite: (siteId: string | null) => void;
   onEditPrompt: (promptId: string) => void;
+  onCreatePrompt: (prefill: NewPromptPagePrefill) => void;
 }
 
 export function useWebsitePromptsPage({
   selectedSiteId,
   onSelectSite,
   onEditPrompt,
+  onCreatePrompt,
 }: WebsitePromptsPageProps) {
   const {
     prompts,
@@ -140,6 +143,7 @@ export function useWebsitePromptsPage({
     hasPrompts,
     selectedSite,
     onEditPrompt,
+    onCreatePrompt,
     removingSiteId,
     setRemovingSiteId,
     pendingRemoveSite,

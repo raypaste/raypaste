@@ -2,6 +2,10 @@ import type { Dispatch, SetStateAction } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { cn } from "#/lib/utils";
 import { Button } from "#/components/ui/button";
+import {
+  suggestPromptNameFromDomain,
+  type NewPromptPagePrefill,
+} from "#/pages/prompts/newPromptPageTypes";
 import type {
   Prompt,
   WebsitePromptSite,
@@ -25,7 +29,7 @@ interface WebsitePromptSiteEditorProps {
   addWebsitePromptSiteRule: (
     siteId: string,
     rule: { kind: "site" | "path-prefix" },
-  ) => void;
+  ) => string;
   updateWebsitePromptSiteRule: (
     siteId: string,
     ruleId: string,
@@ -34,6 +38,7 @@ interface WebsitePromptSiteEditorProps {
   removeWebsitePromptSiteRule: (siteId: string, ruleId: string) => void;
   onRequestRemoveSite: () => void;
   onEditPrompt: (promptId: string) => void;
+  onCreatePrompt: (prefill: NewPromptPagePrefill) => void;
 }
 
 export function WebsitePromptSiteEditor({
@@ -51,8 +56,25 @@ export function WebsitePromptSiteEditor({
   removeWebsitePromptSiteRule,
   onRequestRemoveSite,
   onEditPrompt,
+  onCreatePrompt,
 }: WebsitePromptSiteEditorProps) {
   const domainInputValue = getDomainDraft(selectedSite.id, selectedSite.domain);
+
+  function buildCreatePromptPrefill(
+    rule: Pick<WebsitePromptSiteRule, "id" | "kind" | "value">,
+  ): NewPromptPagePrefill {
+    return {
+      name: suggestPromptNameFromDomain(selectedSite.domain),
+      website: {
+        enabled: true,
+        siteId: selectedSite.id,
+        ruleId: rule.id,
+        domain: selectedSite.domain,
+        ruleKind: rule.kind,
+        pathPrefix: rule.kind === "path-prefix" ? rule.value : "",
+      },
+    };
+  }
 
   return (
     <div className="space-y-4">
@@ -116,17 +138,38 @@ export function WebsitePromptSiteEditor({
       >
         {selectedSite.rules.filter((rule) => rule.kind === "site").length ===
         0 ? (
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={!selectedSite.domain}
-            onClick={() =>
-              addWebsitePromptSiteRule(selectedSite.id, { kind: "site" })
-            }
-          >
-            <Plus className="h-4 w-4" />
-            Add site wide prompt
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={!selectedSite.domain}
+              onClick={() =>
+                addWebsitePromptSiteRule(selectedSite.id, { kind: "site" })
+              }
+            >
+              <Plus className="h-4 w-4" />
+              Add site wide prompt
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!selectedSite.domain}
+              onClick={() => {
+                const ruleId = addWebsitePromptSiteRule(selectedSite.id, {
+                  kind: "site",
+                });
+                onCreatePrompt(
+                  buildCreatePromptPrefill({
+                    id: ruleId,
+                    kind: "site",
+                    value: "",
+                  }),
+                );
+              }}
+            >
+              Create prompt for this site
+            </Button>
+          </div>
         ) : (
           selectedSite.rules
             .filter((rule) => rule.kind === "site")
@@ -171,9 +214,21 @@ export function WebsitePromptSiteEditor({
                 }
                 footer={
                   !rule.promptId ? (
-                    <p className="text-xs text-amber-600">
-                      Choose a prompt to finish this site wide connection.
-                    </p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-xs text-amber-600">
+                        Choose a prompt to finish this site wide connection.
+                      </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="xs"
+                        onClick={() =>
+                          onCreatePrompt(buildCreatePromptPrefill(rule))
+                        }
+                      >
+                        Create new prompt
+                      </Button>
+                    </div>
                   ) : null
                 }
                 assignedPromptId={rule.promptId}
@@ -262,9 +317,27 @@ export function WebsitePromptSiteEditor({
                         <code>https://{selectedSite.domain}/docs</code>.
                       </p>
                     ) : !rule.promptId ? (
-                      <p className="text-xs text-amber-600">
-                        Choose a prompt to activate this subpath rule.
-                      </p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-xs text-amber-600">
+                          Choose a prompt to activate this subpath rule.
+                        </p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="xs"
+                          disabled={!normalizedValue}
+                          onClick={() =>
+                            onCreatePrompt(
+                              buildCreatePromptPrefill({
+                                ...rule,
+                                value: normalizedValue,
+                              }),
+                            )
+                          }
+                        >
+                          Create new prompt
+                        </Button>
+                      </div>
                     ) : null
                   }
                   assignedPromptId={rule.promptId}
