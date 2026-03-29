@@ -156,10 +156,7 @@ describe("collectWebsitePromptCandidates", () => {
         ],
       },
     ];
-    const c = collectWebsitePromptCandidates(
-      sites,
-      "https://example.com/page",
-    );
+    const c = collectWebsitePromptCandidates(sites, "https://example.com/page");
     expect(c.map((x) => x.promptId)).toEqual(["p-a", "p-b"]);
   });
 
@@ -455,7 +452,9 @@ describe("usePromptsStore actions", () => {
     assignAppToPrompt("a1", "com.focused");
     assignAppToPrompt("a2", "com.focused");
 
-    const r = usePromptsStore.getState().resolveHotkeyPrompt("com.focused", null);
+    const r = usePromptsStore
+      .getState()
+      .resolveHotkeyPrompt("com.focused", null);
     expect(r?.kind).toBe("pick");
     if (r?.kind === "pick") {
       expect(r.candidates.map((c) => c.prompt.id)).toEqual(["a1", "a2"]);
@@ -499,7 +498,9 @@ describe("usePromptsStore actions", () => {
     addPrompt({ id: "app-p", name: "App", text: "a" });
     addPrompt({ id: "def-p", name: "Def", text: "d" });
     assignAppToPrompt("app-p", "com.focused");
-    const noApp = usePromptsStore.getState().resolveHotkeyPrompt("com.other", null);
+    const noApp = usePromptsStore
+      .getState()
+      .resolveHotkeyPrompt("com.other", null);
     expect(noApp?.kind).toBe("single");
     if (noApp?.kind === "single") {
       expect(noApp.resolution.source).toBe("builtin");

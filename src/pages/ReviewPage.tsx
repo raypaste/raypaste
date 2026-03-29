@@ -168,7 +168,10 @@ export function ReviewPage() {
     setApplied(true);
     const finalText = textRef.current;
     try {
-      await invoke("write_text_back", { text: finalText, targetPid: ph.targetPid });
+      await invoke("write_text_back", {
+        text: finalText,
+        targetPid: ph.targetPid,
+      });
       localStorage.removeItem(REVIEW_STORAGE_KEY);
       await emit("raypaste://review-outcome", {
         completionId: ph.completionId,
