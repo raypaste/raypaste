@@ -91,7 +91,11 @@ export function Layout() {
                 }
               />
             )}
-            {activePage === "apps" && <AppsPage />}
+            {activePage === "apps" && (
+              <AppsPage
+                onNavigateToSettings={() => handleNavigate("settings")}
+              />
+            )}
             {activePage === "website-prompts" && (
               <WebsitePromptsPage
                 selectedSiteId={selectedWebsitePromptSiteId}

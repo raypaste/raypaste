@@ -1,8 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Search, X } from "lucide-react";
+import { Ellipsis, EyeOff, Search, Settings2, X } from "lucide-react";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "#/components/ui/dropdown-menu";
 import { cn } from "#/lib/utils";
 import { useAppsStore, usePromptsStore } from "#/stores";
 import type { InstalledApp, Prompt } from "#/stores";
@@ -13,8 +19,12 @@ function formatPromptCount(count: number): string {
   return `${count} prompt${count === 1 ? "" : "s"}`;
 }
 
-export function AppsPage() {
-  const { apps, setApps } = useAppsStore();
+interface AppsPageProps {
+  onNavigateToSettings?: () => void;
+}
+
+export function AppsPage({ onNavigateToSettings }: AppsPageProps) {
+  const { apps, setApps, hiddenAppBundleIds, hideApp } = useAppsStore();
   const { prompts, assignAppToPrompt, removeAppFromPrompt, unassignApp } =
     usePromptsStore();
   const [search, setSearch] = useState("");
@@ -33,11 +43,22 @@ export function AppsPage() {
       .catch(() => setLoading(false));
   }, [apps.length, setApps]);
 
-  const filtered = apps.filter(
+  const visibleApps = useMemo(
+    () => apps.filter((app) => !hiddenAppBundleIds.includes(app.bundleId)),
+    [apps, hiddenAppBundleIds],
+  );
+  const hiddenApps = useMemo(
+    () => apps.filter((app) => hiddenAppBundleIds.includes(app.bundleId)),
+    [apps, hiddenAppBundleIds],
+  );
+
+  const filtered = visibleApps.filter(
     (app) =>
       app.name.toLowerCase().includes(search.toLowerCase()) ||
       app.bundleId.toLowerCase().includes(search.toLowerCase()),
   );
+
+  const hiddenCount = hiddenApps.length;
 
   function assignedPromptsForBundle(bundleId: string): Prompt[] {
     return prompts.filter((p) => p.appIds.includes(bundleId));
@@ -69,9 +90,13 @@ export function AppsPage() {
       </div>
 
       {/* App list */}
-      <div className="flex-1 overflow-auto">
+      <div className="min-h-0 flex-1 overflow-auto">
         {filtered.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No apps found.</p>
+          <p className="text-muted-foreground text-sm">
+            {visibleApps.length === 0 && hiddenCount > 0
+              ? "All apps are currently hidden."
+              : "No apps found."}
+          </p>
         ) : (
           <div className="space-y-2">
             {filtered.map((app) => {
@@ -88,7 +113,7 @@ export function AppsPage() {
                   )}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/70 shadow-sm ring-1 ring-black/5 dark:bg-white/5 dark:ring-white/10">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-white/70 shadow-sm ring-1 ring-black/5 dark:bg-white/5 dark:ring-white/10">
                       {iconSrcByBundleId[app.bundleId] ? (
                         <img
                           src={iconSrcByBundleId[app.bundleId]}
@@ -99,21 +124,30 @@ export function AppsPage() {
                         <div className="bg-muted/50 h-8 w-8 rounded-lg" />
                       )}
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-foreground truncate text-sm font-medium">
-                          {app.name}
-                        </p>
-                        <Badge
-                          variant={
-                            assigned.length > 0 ? "secondary" : "outline"
-                          }
-                          className="shrink-0"
-                        >
-                          {formatPromptCount(assigned.length)}
-                        </Badge>
-                      </div>
+                    <div className="flex min-w-0 flex-1 items-center">
+                      <p className="text-foreground mr-2 truncate text-sm font-medium">
+                        {app.name}
+                      </p>
+                      <Badge
+                        variant={assigned.length > 0 ? "secondary" : "outline"}
+                        className="shrink-0"
+                      >
+                        {formatPromptCount(assigned.length)}
+                      </Badge>
                     </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        aria-label={`Open menu for ${app.name}`}
+                      >
+                        <Ellipsis className="h-4 w-4" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuItem onClick={() => hideApp(app.bundleId)}>
+                          <EyeOff className="mr-2 h-4 w-4" />
+                          Hide app
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
 
                   <div className="bg-muted/20 mt-3 rounded-xl border border-dashed border-white/10 p-3">
@@ -195,6 +229,29 @@ export function AppsPage() {
             })}
           </div>
         )}
+
+        {hiddenCount > 0 ? (
+          <div className="border-border/70 bg-card/30 mt-4 flex items-center justify-between rounded-xl border px-3 py-3">
+            <div className="min-w-0">
+              <p className="text-sm font-medium">
+                {hiddenCount} hidden app{hiddenCount === 1 ? "" : "s"}
+              </p>
+              <p className="text-muted-foreground text-xs">
+                Manage hidden apps from Settings.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onNavigateToSettings}
+              className="shrink-0"
+            >
+              <Settings2 className="h-3.5 w-3.5" />
+              View hidden apps
+            </Button>
+          </div>
+        ) : null}
       </div>
     </div>
   );
