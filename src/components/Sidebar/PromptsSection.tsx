@@ -21,6 +21,7 @@ interface PromptsSectionProps {
   activePage: Page;
   selectedPromptId: string | null;
   selectedWebsitePromptSiteId: string | null;
+  compact?: boolean;
   onNavigate: (
     page: Page,
     promptId?: string,
@@ -32,6 +33,7 @@ export function PromptsSection({
   activePage,
   selectedPromptId,
   selectedWebsitePromptSiteId,
+  compact = false,
   onNavigate,
 }: PromptsSectionProps) {
   const { prompts, defaultPromptId, websitePromptSites } = usePromptsStore();
@@ -165,10 +167,15 @@ export function PromptsSection({
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       {prompts.length > 0 ? (
         <div className="shrink-0">
-          <p className="text-muted-foreground mb-1 px-3 text-xs font-semibold tracking-wider uppercase select-none">
+          <p
+            className={cn(
+              "text-muted-foreground px-3 text-xs font-semibold tracking-wider uppercase select-none",
+              compact ? "mb-2" : "mb-1",
+            )}
+          >
             Prompts
           </p>
-          <div className="mb-2 px-2">
+          <div className={cn("px-2", compact ? "mb-3" : "mb-2")}>
             <div className="relative">
               <Search
                 className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2"
