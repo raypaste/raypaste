@@ -67,6 +67,9 @@ export function SettingsPage() {
     (m) => m.label,
   );
 
+  const modelLabelForId = (id: string) =>
+    modelOptions.find((m) => m.value === id)?.label ?? id;
+
   const currentKey =
     provider === LLM_PROVIDER.Cerebras ? cerebrasApiKey : openrouterApiKey;
   const setCurrentKey =
@@ -211,6 +214,12 @@ export function SettingsPage() {
               )}
             </Button>
           </div>
+          {provider === LLM_PROVIDER.Cerebras ? (
+            <p className="text-muted-foreground text-xs">
+              Free-tier Cerebras API keys have limited access to GPT OSS 120B;
+              use Llama 3.1 8B or a paid tier to access that model.
+            </p>
+          ) : null}
         </section>
       )}
 
@@ -297,12 +306,10 @@ export function SettingsPage() {
       <section className="space-y-3">
         <h2 className="text-foreground text-sm font-semibold">Model</h2>
         <Combobox
-          value={modelOptions.find((m) => m.value === model)?.label ?? model}
-          onValueChange={(label) => {
-            if (label)
-              setModel(
-                modelOptions.find((m) => m.label === label)?.value ?? label,
-              );
+          value={model}
+          itemToStringLabel={modelLabelForId}
+          onValueChange={(id) => {
+            if (id != null && id !== "") setModel(id);
           }}
           onOpenChange={modelSearch.onOpenChange}
           onInputValueChange={(val) => setModelQuery(val)}
@@ -321,7 +328,7 @@ export function SettingsPage() {
               {filteredModelOptions.map((m) => (
                 <ComboboxItem
                   key={m.value}
-                  value={m.label}
+                  value={m.value}
                   className="py-2 pl-3"
                 >
                   {m.label}
